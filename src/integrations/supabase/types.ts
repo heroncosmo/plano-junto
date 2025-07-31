@@ -14,7 +14,335 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      group_memberships: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          paid_amount_cents: number
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          paid_amount_cents: number
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          paid_amount_cents?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_memberships_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          access_credentials: string | null
+          access_sent_at: string | null
+          admin_approved: boolean | null
+          admin_id: string
+          created_at: string
+          current_members: number | null
+          description: string | null
+          id: string
+          instant_access: boolean | null
+          max_members: number
+          name: string
+          price_per_slot_cents: number
+          relationship_type: string
+          rules: string | null
+          service_id: string
+          status: Database["public"]["Enums"]["group_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          access_credentials?: string | null
+          access_sent_at?: string | null
+          admin_approved?: boolean | null
+          admin_id: string
+          created_at?: string
+          current_members?: number | null
+          description?: string | null
+          id?: string
+          instant_access?: boolean | null
+          max_members: number
+          name: string
+          price_per_slot_cents: number
+          relationship_type: string
+          rules?: string | null
+          service_id: string
+          status?: Database["public"]["Enums"]["group_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          access_credentials?: string | null
+          access_sent_at?: string | null
+          admin_approved?: boolean | null
+          admin_id?: string
+          created_at?: string
+          current_members?: number | null
+          description?: string | null
+          id?: string
+          instant_access?: boolean | null
+          max_members?: number
+          name?: string
+          price_per_slot_cents?: number
+          relationship_type?: string
+          rules?: string | null
+          service_id?: string
+          status?: Database["public"]["Enums"]["group_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address_city: string | null
+          address_number: string | null
+          address_state: string | null
+          address_street: string | null
+          address_zipcode: string | null
+          balance_cents: number | null
+          cpf: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          pix_key: string | null
+          two_fa_enabled: boolean | null
+          updated_at: string
+          user_id: string
+          verification_code: string | null
+          verification_expires_at: string | null
+          verification_status:
+            | Database["public"]["Enums"]["user_verification_status"]
+            | null
+        }
+        Insert: {
+          address_city?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zipcode?: string | null
+          balance_cents?: number | null
+          cpf?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          pix_key?: string | null
+          two_fa_enabled?: boolean | null
+          updated_at?: string
+          user_id: string
+          verification_code?: string | null
+          verification_expires_at?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["user_verification_status"]
+            | null
+        }
+        Update: {
+          address_city?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zipcode?: string | null
+          balance_cents?: number | null
+          cpf?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          pix_key?: string | null
+          two_fa_enabled?: boolean | null
+          updated_at?: string
+          user_id?: string
+          verification_code?: string | null
+          verification_expires_at?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["user_verification_status"]
+            | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string | null
+          group_id: string | null
+          id: string
+          reason: string
+          reported_user_id: string | null
+          reporter_id: string
+          resolved_at: string | null
+          status: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          reason: string
+          reported_user_id?: string | null
+          reporter_id: string
+          resolved_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          reason?: string
+          reported_user_id?: string | null
+          reporter_id?: string
+          resolved_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          category: Database["public"]["Enums"]["service_category"]
+          created_at: string
+          icon_url: string | null
+          id: string
+          max_users: number
+          name: string
+          pre_approved: boolean | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["service_category"]
+          created_at?: string
+          icon_url?: string | null
+          id?: string
+          max_users?: number
+          name: string
+          pre_approved?: boolean | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["service_category"]
+          created_at?: string
+          icon_url?: string | null
+          id?: string
+          max_users?: number
+          name?: string
+          pre_approved?: boolean | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          description: string | null
+          external_payment_id: string | null
+          fee_cents: number | null
+          group_id: string | null
+          id: string
+          payment_method: string | null
+          status: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          description?: string | null
+          external_payment_id?: string | null
+          fee_cents?: number | null
+          group_id?: string | null
+          id?: string
+          payment_method?: string | null
+          status?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          description?: string | null
+          external_payment_id?: string | null
+          fee_cents?: number | null
+          group_id?: string | null
+          id?: string
+          payment_method?: string | null
+          status?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      withdrawals: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          pix_key: string
+          processed_at: string | null
+          status: string | null
+          two_fa_verified: boolean | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          pix_key: string
+          processed_at?: string | null
+          status?: string | null
+          two_fa_verified?: boolean | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          pix_key?: string
+          processed_at?: string | null
+          status?: string | null
+          two_fa_verified?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +351,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      group_status: "waiting_subscription" | "queue" | "active_with_slots"
+      service_category:
+        | "streaming"
+        | "music"
+        | "education"
+        | "ai"
+        | "gaming"
+        | "productivity"
+        | "other"
+      user_verification_status: "pending" | "verified"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +487,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      group_status: ["waiting_subscription", "queue", "active_with_slots"],
+      service_category: [
+        "streaming",
+        "music",
+        "education",
+        "ai",
+        "gaming",
+        "productivity",
+        "other",
+      ],
+      user_verification_status: ["pending", "verified"],
+    },
   },
 } as const
