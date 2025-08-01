@@ -4,6 +4,8 @@ import { User, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Header = () => {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
