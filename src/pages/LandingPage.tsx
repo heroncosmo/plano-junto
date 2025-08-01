@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
 import GroupsSection from "@/components/GroupsSection";
 
-const Index = () => {
+const LandingPage = () => {
   const { user, loading } = useAuth();
 
   // Se estiver carregando, não mostrar nada
@@ -13,9 +13,9 @@ const Index = () => {
     return null;
   }
 
-  // Se estiver logado, redirecionar para o app
+  // Se estiver logado, redirecionar para dashboard
   if (user) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Se não estiver logado, mostrar landing page
@@ -31,4 +31,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default LandingPage;
