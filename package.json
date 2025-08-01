@@ -2,7 +2,7 @@
   "name": "juntaplay",
   "private": true,
   "version": "1.0.0",
-  "description": "Plataforma para economizar em assinaturas compartilhadas",
+  "description": "Quer economizar até 80% em assinaturas? Junte-se a milhares de pessoas economizando juntas!",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -82,15 +82,34 @@
     "vite": "^5.4.1"
   },
   "keywords": [
+    "juntaplay",
+    "economizar assinaturas",
+    "compartilhar netflix",
+    "dividir spotify",
+    "streaming barato",
+    "economia mensal",
+    "assinaturas compartilhadas",
+    "netflix compartilhado",
+    "spotify compartilhado",
+    "disney plus compartilhado",
+    "hbo max compartilhado",
+    "economia streaming",
+    "dividir contas",
+    "compartilhar contas",
+    "economia até 80%",
     "react",
     "typescript",
     "vite",
-    "supabase",
-    "streaming",
-    "subscriptions",
-    "economy",
-    "sharing"
+    "supabase"
   ],
   "author": "JuntaPlay Team",
-  "license": "MIT"
+  "license": "MIT",
+  "homepage": "https://juntaplay.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heroncosmo/plano-junto.git"
+  },
+  "bugs": {
+    "url": "https://github.com/heroncosmo/plano-junto/issues"
+  }
 }

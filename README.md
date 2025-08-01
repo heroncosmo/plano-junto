@@ -1,8 +1,18 @@
-# JuntaPlay - Economize em Assinaturas
+# JuntaPlay - Economize até 80% em Assinaturas
 
 ## Sobre o Projeto
 
-JuntaPlay é uma plataforma que permite que pessoas se juntem para economizar em assinaturas de streaming, música, educação e muito mais. Junte-se a milhares de pessoas economizando juntas!
+**Quer economizar até 80% em assinaturas?** Junte-se a milhares de pessoas economizando juntas!
+
+JuntaPlay é a plataforma líder que permite que pessoas se juntem para economizar em assinaturas de streaming, música, educação e muito mais. Com nossa tecnologia segura, você pode dividir custos de Netflix, Spotify, Disney+, HBO Max e outros serviços com pessoas confiáveis.
+
+### 🎯 **Por que escolher o JuntaPlay?**
+
+- ✅ **Economia real**: Economize até 80% em suas assinaturas favoritas
+- ✅ **Segurança garantida**: Pagamentos seguros e proteção de dados
+- ✅ **Processo simples**: Encontre grupos ou crie o seu em minutos
+- ✅ **Suporte 24/7**: Equipe especializada para ajudar você
+- ✅ **Milhares de usuários**: Comunidade ativa e confiável
 
 ## Como editar este código?
 
@@ -96,3 +106,7 @@ src/
 ## Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+---
+
+**Começar a economizar agora!** 🚀
