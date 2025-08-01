@@ -107,10 +107,6 @@ const Header = () => {
                       <User className="mr-2 h-4 w-4" />
                       App
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -168,13 +164,6 @@ const Header = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     App
-                  </Link>
-                  <Link
-                    to="/dashboard"
-                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Dashboard
                   </Link>
                   <button
                     onClick={() => {
