@@ -37,11 +37,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
-        // Redirecionar para /app após login bem-sucedido
-        if (event === 'SIGNED_IN' && session?.user) {
-          window.location.href = '/app';
-        }
       }
     );
 

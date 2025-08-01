@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,10 +20,11 @@ const Auth = () => {
   
   const { user, signIn, signUp } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Redirect if already authenticated
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +42,10 @@ const Auth = () => {
             title: "Login realizado com sucesso!",
             description: "Bem-vindo de volta ao JuntaPlay",
           });
+          // Redirecionar para /app após login bem-sucedido
+          setTimeout(() => {
+            navigate('/app');
+          }, 1000);
         }
       } else {
         const { error } = await signUp(email, password);
@@ -111,35 +116,29 @@ const Auth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
                   required
-                  minLength={6}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+                </button>
               </div>
             </div>
 
             <Button 
               type="submit" 
-              className="w-full shadow-button"
+              className="w-full" 
               disabled={loading}
             >
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {isLogin ? 'Entrando...' : 'Criando conta...'}
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>{isLogin ? 'Entrando...' : 'Criando conta...'}</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  {isLogin ? 'Entrar' : 'Criar Conta'}
-                </div>
+                isLogin ? 'Entrar' : 'Criar Conta'
               )}
             </Button>
           </form>
@@ -149,26 +148,17 @@ const Auth = () => {
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
               {isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                }}
+                className="ml-1 text-primary hover:underline font-medium"
+              >
+                {isLogin ? 'Criar conta' : 'Entrar'}
+              </button>
             </p>
-            <Button 
-              variant="link" 
-              onClick={() => setIsLogin(!isLogin)}
-              className="p-0 h-auto text-primary hover:text-primary-glow"
-            >
-              {isLogin ? 'Criar conta grátis' : 'Fazer login'}
-            </Button>
           </div>
-
-          {!isLogin && (
-            <div className="text-xs text-muted-foreground text-center space-y-1">
-              <p>Ao criar uma conta, você concorda com nossos</p>
-              <div className="flex justify-center gap-1">
-                <Button variant="link" className="p-0 h-auto text-xs">Termos de Uso</Button>
-                <span>e</span>
-                <Button variant="link" className="p-0 h-auto text-xs">Política de Privacidade</Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
