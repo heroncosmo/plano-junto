@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
-import UserDashboard from "./pages/App";
+import Landing from "./pages/Landing";
+import App from "./pages/App";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AllGroups from "./pages/AllGroups";
@@ -18,7 +19,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const AppRouter = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
@@ -26,8 +27,13 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/app" element={<UserDashboard />} />
+            {/* Landing page para visitantes */}
+            <Route path="/" element={<Landing />} />
+            
+            {/* App para usuários logados */}
+            <Route path="/app" element={<App />} />
+            
+            {/* Outras rotas */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/groups" element={<AllGroups />} />
@@ -36,7 +42,8 @@ const App = () => (
             <Route path="/loyalty-group" element={<LoyaltyGroup />} />
             <Route path="/payment/:id" element={<Payment />} />
             <Route path="/payment/success/:id" element={<PaymentSuccess />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            
+            {/* Rota catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
@@ -45,4 +52,4 @@ const App = () => (
   </QueryClientProvider>
 );
 
-export default App;
+export default AppRouter;

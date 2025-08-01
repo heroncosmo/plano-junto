@@ -1,55 +1,101 @@
 import { useState, useEffect, useRef } from 'react';
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Users, Clock, Star, Gift, TrendingUp, Sparkles, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useGroups, formatPrice, formatCategory } from "@/hooks/useGroups";
+import { Link } from 'react-router-dom';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useGroups } from '@/hooks/useGroups';
+import { ChevronRight, ChevronLeft, ShoppingCart, TrendingUp, Users, Star } from 'lucide-react';
 
-const UserDashboard = () => {
+const App = () => {
   const { groups, loading, error } = useGroups();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef2 = useRef<HTMLDivElement>(null);
+  const scrollRef3 = useRef<HTMLDivElement>(null);
+  const scrollRef4 = useRef<HTMLDivElement>(null);
 
-  // Dividir grupos em categorias para exibição
-  const featuredGroups = groups.slice(0, 4);
-  const trendingGroups = groups.slice(4, 8);
-  const discoveryGroups = groups.slice(8, 12);
+  // Debug logs
+  console.log('🎯 Estado no App:', { groups, loading, error });
+  console.log('📈 Total grupos recebidos:', groups?.length || 0);
 
-  const getGroupImage = (category: string) => {
-    const imageMap: Record<string, string> = {
-      'ai_tools': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400',
-      'streaming': 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=400',
-      'gaming': 'https://images.unsplash.com/photo-1606318664588-f04fcec5f817?w=400',
-      'design': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
-      'education': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400',
-      'productivity': 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400'
-    };
-    return imageMap[category] || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400';
+  // Função para embaralhar array aleatoriamente
+  const shuffleArray = (array: any[]) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // Dividir grupos em seções com dados aleatórios
+  const dividedGroups = {
+    selected: groups?.slice(0, 8) || [], // Selecionados para você
+    discovery: shuffleArray(groups || []).slice(0, 10) || [], // Descobrir - aleatório
+    trending: shuffleArray(groups || []).slice(0, 8) || [], // Descubra o que estão compartilhando
+    popular: shuffleArray(groups || []).slice(0, 6) || [] // Populares
+  };
+
+  console.log('🔍 Grupos divididos:', {
+    selected: dividedGroups.selected.length,
+    discovery: dividedGroups.discovery.length,
+    trending: dividedGroups.trending.length,
+    popular: dividedGroups.popular.length
+  });
+
+  const getServiceInitial = (serviceName: string) => {
+    return serviceName.charAt(0).toUpperCase();
   };
 
   const getCategoryColor = (category: string) => {
-    const colorMap: Record<string, string> = {
-      'ai_tools': 'bg-purple-500',
+    const colors: { [key: string]: string } = {
+      'ai_tools': 'bg-emerald-500',
       'streaming': 'bg-red-500',
+      'design': 'bg-purple-500',
+      'productivity': 'bg-blue-500',
       'gaming': 'bg-green-500',
-      'design': 'bg-pink-500',
-      'education': 'bg-blue-500',
-      'productivity': 'bg-orange-500'
+      'education': 'bg-orange-500',
+      'ai': 'bg-emerald-500',
+      'music': 'bg-pink-500',
+      'other': 'bg-gray-500'
     };
-    return colorMap[category] || 'bg-gray-500';
+    return colors[category] || 'bg-gray-500';
+  };
+
+  const formatPrice = (priceCents: number) => {
+    return `R$ ${(priceCents / 100).toFixed(2).replace('.', ',')}`;
+  };
+
+  const getStatusText = (availableSpots: number, isAssinado: boolean = true) => {
+    if (isAssinado) {
+      return availableSpots > 0 ? 'Aguardando membros' : 'Grupo completo';
+    }
+    return availableSpots > 0 ? 'Aguardando membros' : 'Grupo completo';
+  };
+
+  const scrollLeft = (ref: React.RefObject<HTMLDivElement>) => {
+    if (ref.current) {
+      ref.current.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = (ref: React.RefObject<HTMLDivElement>) => {
+    if (ref.current) {
+      ref.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container mx-auto px-4 py-8 flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Carregando grupos...</span>
+        <main className="max-w-5xl mx-auto px-6 py-8">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Carregando grupos...</p>
           </div>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -59,12 +105,11 @@ const UserDashboard = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-red-600">{error}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Tentar novamente
-          </Button>
-        </div>
+        <main className="max-w-5xl mx-auto px-6 py-8">
+          <div className="text-center py-12">
+            <p className="text-red-600">Erro ao carregar grupos: {error}</p>
+          </div>
+        </main>
         <Footer />
       </div>
     );
@@ -74,220 +119,262 @@ const UserDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <main className="max-w-6xl mx-auto px-8 py-8 space-y-12">
-        {/* Hero Banner - Estilo Kotas */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <div className="space-y-3">
-                <h1 className="text-3xl font-bold">
-                  Quer economizar até
-                  <span className="block text-4xl text-yellow-300">80% em assinaturas?</span>
-                </h1>
-                <p className="text-lg opacity-90">
-                  Junte-se a milhares de pessoas economizando juntas!
-                </p>
-                <Button size="default" className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg">
-                  <Gift className="mr-2 h-4 w-4" />
-                  Começar a economizar
-                </Button>
-              </div>
-              <div className="hidden md:block">
-                <div className="text-5xl">🍀</div>
-              </div>
-            </div>
+      <main className="max-w-5xl mx-auto px-6 py-8 space-y-10">
+        
+        {/* Hero Banner - ECONOMIA EM ASSINATURAS */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white relative overflow-hidden flex items-center justify-between">
+          <div className="space-y-3 z-10">
+            <h1 className="text-3xl font-bold">
+              Quer economizar até
+              <br />
+              <span className="text-yellow-400">80% em assinaturas?</span>
+            </h1>
+            <p className="text-lg opacity-90">
+              Junte-se a milhares de pessoas economizando juntas!
+            </p>
+          </div>
+          <div className="flex-shrink-0 z-10">
+            <Link to="/groups">
+              <Button size="lg" className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold rounded-lg px-8 flex items-center gap-2">
+                <span className="text-black">🎁</span>
+                Começar a economizar
+              </Button>
+            </Link>
+          </div>
+          <div className="absolute right-0 top-0 text-9xl text-green-400 opacity-20 z-0 transform -translate-y-1/4 translate-x-1/4">
+            🍀
           </div>
         </div>
 
-        {/* Selecionados para você */}
+        {/* Seção: Selecionados para você */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Selecionados para você</h2>
-            <Button variant="ghost" asChild>
-              <Link to="/groups">Ver Tudo</Link>
-            </Button>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-500" />
+              Selecionados para você
+            </h2>
+            <Link to="/groups" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+              Ver Tudo
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {featuredGroups.map((group) => {
-              const availableSpots = group.max_members - group.current_members;
-              const getServiceInitial = (name: string) => name.charAt(0).toUpperCase();
-              const groupCode = `#${group.id.slice(-6).toUpperCase()}`;
-              
-              return (
-                <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
-                  <Link to={`/group/${group.id}`}>
-                    <CardContent className="p-6 text-center space-y-3">
-                      {/* Avatar com inicial */}
-                      <div className="w-16 h-16 mx-auto bg-emerald-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                        {getServiceInitial(group.service.name)}
-                      </div>
-                      
-                      {/* Nome do serviço */}
-                      <h3 className="font-semibold text-gray-900 text-sm">
-                        {group.service.name}
-                      </h3>
-                      
-                      {/* Código do grupo */}
-                      <p className="text-xs text-gray-400">{groupCode}</p>
-                      
-                      {/* Número de vagas */}
-                      <p className="text-sm text-gray-600 font-medium">
-                        {group.max_members} Vagas
-                      </p>
-                      
-                      {/* Preço */}
-                      <p className="text-xl font-bold text-gray-900">
-                        {formatPrice(group.price_per_slot_cents)}
-                      </p>
-                      
-                      {/* Status */}
-                      <p className="text-xs text-gray-500">
-                        {availableSpots > 0 ? 'Aguardando membros' : 'Grupo completo'}
-                      </p>
-                    </CardContent>
-                  </Link>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Os grupos estão bombando */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-2xl font-bold text-gray-900">Os grupos estão bombando</h2>
-              <TrendingUp className="h-6 w-6 text-orange-500" />
-              <Sparkles className="h-6 w-6 text-yellow-500" />
-            </div>
-            <Button variant="ghost" asChild>
-              <Link to="/groups">Ver Tudo</Link>
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {trendingGroups.map((group) => {
-              const availableSpots = group.max_members - group.current_members;
-              const getServiceInitial = (name: string) => name.charAt(0).toUpperCase();
-              const groupCode = `#${group.id.slice(-6).toUpperCase()}`;
-              
-              return (
-                <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
-                  <Link to={`/group/${group.id}`}>
-                    <CardContent className="p-6 text-center space-y-3">
-                      {/* Avatar com inicial */}
-                      <div className="w-16 h-16 mx-auto bg-emerald-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                        {getServiceInitial(group.service.name)}
-                      </div>
-                      
-                      {/* Nome do serviço */}
-                      <h3 className="font-semibold text-gray-900 text-sm">
-                        {group.service.name}
-                      </h3>
-                      
-                      {/* Código do grupo */}
-                      <p className="text-xs text-gray-400">{groupCode}</p>
-                      
-                      {/* Número de vagas */}
-                      <p className="text-sm text-gray-600 font-medium">
-                        {group.max_members} Vagas
-                      </p>
-                      
-                      {/* Preço */}
-                      <p className="text-xl font-bold text-gray-900">
-                        {formatPrice(group.price_per_slot_cents)}
-                      </p>
-                      
-                      {/* Status */}
-                      <p className="text-xs text-gray-500">
-                        {availableSpots > 0 ? 'Aguardando membros' : 'Grupo completo'}
-                      </p>
-                    </CardContent>
-                  </Link>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Descubra o que estão compartilhando */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Descubra o que estão compartilhando</h2>
-            <Button variant="ghost" asChild>
-              <Link to="/groups">Ver Tudo</Link>
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {discoveryGroups.map((group) => {
-              const availableSpots = group.max_members - group.current_members;
-              const getServiceInitial = (name: string) => name.charAt(0).toUpperCase();
-              const groupCode = `#${group.id.slice(-6).toUpperCase()}`;
-              
-              return (
-                <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
-                  <Link to={`/group/${group.id}`}>
-                    <CardContent className="p-6 text-center space-y-3">
-                      {/* Avatar com inicial */}
-                      <div className="w-16 h-16 mx-auto bg-emerald-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                        {getServiceInitial(group.service.name)}
-                      </div>
-                      
-                      {/* Nome do serviço */}
-                      <h3 className="font-semibold text-gray-900 text-sm">
-                        {group.service.name}
-                      </h3>
-                      
-                      {/* Código do grupo */}
-                      <p className="text-xs text-gray-400">{groupCode}</p>
-                      
-                      {/* Número de vagas */}
-                      <p className="text-sm text-gray-600 font-medium">
-                        {group.max_members} Vagas
-                      </p>
-                      
-                      {/* Preço */}
-                      <p className="text-xl font-bold text-gray-900">
-                        {formatPrice(group.price_per_slot_cents)}
-                      </p>
-                      
-                      {/* Status */}
-                      <p className="text-xs text-gray-500">
-                        {availableSpots > 0 ? 'Aguardando membros' : 'Grupo completo'}
-                      </p>
-                    </CardContent>
-                  </Link>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Call to Action Bottom */}
-        <section className="bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl p-8 text-white text-center">
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Todo mundo ganha</h2>
-            <p className="text-lg opacity-90">
-              Cada pessoa que você indicar recebe desconto na primeira inscrição e você ganha 
-              créditos para usar em qualquer grupo. É o verdadeiro win-win!
-            </p>
-            <div className="flex justify-center space-x-4">
-              <Button size="lg" variant="secondary">
-                Indicar amigos
-              </Button>
+          {/* Container com scroll horizontal e botões de navegação */}
+          <div className="relative group">
+            {/* Botão esquerdo */}
+            <button
+              onClick={() => scrollLeft(scrollRef)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+            >
+              <ChevronLeft className="h-5 w-5 text-gray-600" />
+            </button>
+            
+            {/* Botão direito */}
+            <button
+              onClick={() => scrollRight(scrollRef)}
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+            >
+              <ChevronRight className="h-5 w-5 text-gray-600" />
+            </button>
+            
+            {/* Scroll horizontal */}
+            <div 
+              ref={scrollRef}
+              className="overflow-x-auto pb-4 scrollbar-hide"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <div className="flex gap-4 min-w-max px-4">
+                {dividedGroups.selected.map((group) => {
+                  const availableSpots = group.max_members - group.current_members;
+                  
+                  return (
+                    <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[200px]">
+                      <Link to={`/group/${group.id}`}>
+                        <CardContent className="p-6 text-center space-y-3">
+                          {/* Avatar com inicial */}
+                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.service.category)} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
+                            {getServiceInitial(group.service.name)}
+                          </div>
+                          {/* Nome do serviço */}
+                          <h3 className="font-semibold text-gray-900 text-sm">
+                            {group.service.name}
+                          </h3>
+                          {/* Número de vagas */}
+                          <p className="text-sm text-gray-600 font-medium">
+                            {group.max_members} Vagas
+                          </p>
+                          {/* Preço */}
+                          <p className="text-xl font-bold text-gray-900">
+                            {formatPrice(group.price_per_slot_cents)}
+                          </p>
+                          {/* Status com design de selo */}
+                          <div className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-xs text-gray-600 font-medium">
+                            {getStatusText(availableSpots)}
+                          </div>
+                        </CardContent>
+                      </Link>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
           </div>
-          <div className="mt-6 flex justify-center">
-            <div className="text-6xl">🎉</div>
+        </section>
+
+        {/* Seção: Descobrir */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-500" />
+              Descobrir
+            </h2>
+            <Link to="/groups" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+              Ver Tudo
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+          
+          {/* Container com scroll horizontal e botões de navegação */}
+          <div className="relative group">
+            {/* Botão esquerdo */}
+            <button
+              onClick={() => scrollLeft(scrollRef2)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+            >
+              <ChevronLeft className="h-5 w-5 text-gray-600" />
+            </button>
+            
+            {/* Botão direito */}
+            <button
+              onClick={() => scrollRight(scrollRef2)}
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+            >
+              <ChevronRight className="h-5 w-5 text-gray-600" />
+            </button>
+            
+            {/* Scroll horizontal */}
+            <div 
+              ref={scrollRef2}
+              className="overflow-x-auto pb-4 scrollbar-hide"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <div className="flex gap-4 min-w-max px-4">
+                {dividedGroups.discovery.map((group) => {
+                  const availableSpots = group.max_members - group.current_members;
+                  
+                  return (
+                    <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[200px]">
+                      <Link to={`/group/${group.id}`}>
+                        <CardContent className="p-6 text-center space-y-3">
+                          {/* Avatar com inicial */}
+                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.service.category)} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
+                            {getServiceInitial(group.service.name)}
+                          </div>
+                          {/* Nome do serviço */}
+                          <h3 className="font-semibold text-gray-900 text-sm">
+                            {group.service.name}
+                          </h3>
+                          {/* Número de vagas */}
+                          <p className="text-sm text-gray-600 font-medium">
+                            {group.max_members} Vagas
+                          </p>
+                          {/* Preço */}
+                          <p className="text-xl font-bold text-gray-900">
+                            {formatPrice(group.price_per_slot_cents)}
+                          </p>
+                          {/* Status com design de selo */}
+                          <div className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-xs text-gray-600 font-medium">
+                            {getStatusText(availableSpots)}
+                          </div>
+                        </CardContent>
+                      </Link>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Seção: Descubra o que estão compartilhando */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Users className="h-5 w-5 text-green-500" />
+              Descubra o que estão compartilhando
+            </h2>
+            <Link to="/groups" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+              Ver Tudo
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+          
+          {/* Container com scroll horizontal e botões de navegação */}
+          <div className="relative group">
+            {/* Botão esquerdo */}
+            <button
+              onClick={() => scrollLeft(scrollRef3)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+            >
+              <ChevronLeft className="h-5 w-5 text-gray-600" />
+            </button>
+            
+            {/* Botão direito */}
+            <button
+              onClick={() => scrollRight(scrollRef3)}
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+            >
+              <ChevronRight className="h-5 w-5 text-gray-600" />
+            </button>
+            
+            {/* Scroll horizontal */}
+            <div 
+              ref={scrollRef3}
+              className="overflow-x-auto pb-4 scrollbar-hide"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <div className="flex gap-4 min-w-max px-4">
+                {dividedGroups.trending.map((group) => {
+                  const availableSpots = group.max_members - group.current_members;
+                  
+                  return (
+                    <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[200px]">
+                      <Link to={`/group/${group.id}`}>
+                        <CardContent className="p-6 text-center space-y-3">
+                          {/* Avatar com inicial */}
+                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.service.category)} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
+                            {getServiceInitial(group.service.name)}
+                          </div>
+                          {/* Nome do serviço */}
+                          <h3 className="font-semibold text-gray-900 text-sm">
+                            {group.service.name}
+                          </h3>
+                          {/* Número de vagas */}
+                          <p className="text-sm text-gray-600 font-medium">
+                            {group.max_members} Vagas
+                          </p>
+                          {/* Preço */}
+                          <p className="text-xl font-bold text-gray-900">
+                            {formatPrice(group.price_per_slot_cents)}
+                          </p>
+                          {/* Status com design de selo */}
+                          <div className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-xs text-gray-600 font-medium">
+                            {getStatusText(availableSpots)}
+                          </div>
+                        </CardContent>
+                      </Link>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );
 };
 
-export default UserDashboard;
+export default App; 

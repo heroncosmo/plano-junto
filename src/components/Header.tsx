@@ -37,17 +37,26 @@ const Header = () => {
     }
   };
 
+  // Redirecionar usuários logados para o app
+  const handleLogoClick = () => {
+    if (user) {
+      navigate("/app");
+    } else {
+      navigate("/");
+    }
+  };
+
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-8">
         <div className="flex h-16 items-center gap-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
+          <button onClick={handleLogoClick} className="flex items-center space-x-2 flex-shrink-0">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg">J</span>
             </div>
             <span className="text-xl font-bold">JuntaPlay</span>
-          </Link>
+          </button>
 
           {/* Search Bar - Centro */}
           <form onSubmit={handleSearch} className="flex-1 max-w-md mx-auto hidden md:block">
@@ -94,13 +103,13 @@ const Header = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                    <DropdownMenuItem onClick={() => navigate("/app")}>
                       <User className="mr-2 h-4 w-4" />
-                      Dashboard
+                      App
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard?tab=perfil")}>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Perfil
+                      Dashboard
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
@@ -112,20 +121,20 @@ const Header = () => {
               </>
             ) : (
               <>
-                <Button variant="ghost" asChild>
+                <Button variant="ghost" size="sm" asChild>
                   <Link to="/auth">Entrar</Link>
                 </Button>
-                <Button asChild className="shadow-button">
+                <Button size="sm" asChild>
                   <Link to="/auth">Cadastrar gratuitamente</Link>
                 </Button>
               </>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile menu button */}
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             className="md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
@@ -133,73 +142,67 @@ const Header = () => {
           </Button>
         </div>
 
-        {/* Mobile Search */}
-        <div className="md:hidden px-4 py-3 border-t">
-          <form onSubmit={handleSearch} className="w-full">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Descubra o que estão compartilhando"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-muted/50 border-0 focus:bg-background w-full"
-              />
-            </div>
-          </form>
-        </div>
-
-        {/* Mobile Navigation */}
+        {/* Mobile menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t">
-            <nav className="flex flex-col space-y-4">
+            <nav className="space-y-2">
               <Link
                 to="/groups"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Meus Grupos
               </Link>
               <Link
                 to="/creditos"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Meus Créditos
               </Link>
-              
               {user ? (
-                <div className="flex flex-col space-y-2 pt-4 border-t">
-                  <Button variant="ghost" asChild>
-                    <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
-                      Dashboard
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" asChild>
-                    <Link to="/dashboard?tab=perfil" onClick={() => setIsMenuOpen(false)}>
-                      Perfil
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" onClick={() => {
-                    setIsMenuOpen(false);
-                    handleSignOut();
-                  }}>
+                <>
+                  <Link
+                    to="/app"
+                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    App
+                  </Link>
+                  <Link
+                    to="/dashboard"
+                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                  >
                     Sair
-                  </Button>
-                </div>
+                  </button>
+                </>
               ) : (
-                <div className="flex flex-col space-y-2 pt-4 border-t">
-                  <Button variant="ghost" asChild>
-                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                      Entrar
-                    </Link>
-                  </Button>
-                  <Button asChild className="shadow-button">
-                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                      Cadastrar gratuitamente
-                    </Link>
-                  </Button>
-                </div>
+                <>
+                  <Link
+                    to="/auth"
+                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Entrar
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Cadastrar gratuitamente
+                  </Link>
+                </>
               )}
             </nav>
           </div>

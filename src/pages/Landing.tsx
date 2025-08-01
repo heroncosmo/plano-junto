@@ -3,7 +3,7 @@ import Footer from '@/components/Footer';
 import Hero from '@/components/Hero';
 import GroupsSection from '@/components/GroupsSection';
 
-const Index = () => {
+const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -14,4 +14,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Landing; 
