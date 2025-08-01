@@ -37,6 +37,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Redirecionar para /app após login bem-sucedido
+        if (event === 'SIGNED_IN' && session?.user) {
+          window.location.href = '/app';
+        }
       }
     );
 
@@ -51,7 +56,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/app`;
     
     const { error } = await supabase.auth.signUp({
       email,

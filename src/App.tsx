@@ -16,6 +16,7 @@ import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import LoyaltyGroup from "./pages/LoyaltyGroup";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -27,8 +28,12 @@ const AppRouter = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Landing page para visitantes */}
-            <Route path="/" element={<Landing />} />
+            {/* Landing page para visitantes - redireciona usuários logados para /app */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Landing />
+              </ProtectedRoute>
+            } />
             
             {/* App para usuários logados */}
             <Route path="/app" element={<App />} />
