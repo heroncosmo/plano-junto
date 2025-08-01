@@ -17,6 +17,11 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import LoyaltyGroup from "./pages/LoyaltyGroup";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CreateGroup from "./pages/CreateGroup";
+import CreateGroupPlan from "./pages/CreateGroupPlan";
+import CreateGroupInfo from "./pages/CreateGroupInfo";
+import CreateGroupFidelity from "./pages/CreateGroupFidelity";
+import CreateGroupConfirmation from "./pages/CreateGroupConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +52,13 @@ const AppRouter = () => (
             <Route path="/loyalty-group" element={<LoyaltyGroup />} />
             <Route path="/payment/:id" element={<Payment />} />
             <Route path="/payment/success/:id" element={<PaymentSuccess />} />
+            
+            {/* Create Group Flow */}
+            <Route path="/create-group" element={<CreateGroup />} />
+            <Route path="/create-group/plan/:serviceId" element={<CreateGroupPlan />} />
+            <Route path="/create-group/info" element={<CreateGroupInfo />} />
+            <Route path="/create-group/fidelity" element={<CreateGroupFidelity />} />
+            <Route path="/create-group/confirmation" element={<CreateGroupConfirmation />} />
             
             {/* Rota catch-all */}
             <Route path="*" element={<NotFound />} />

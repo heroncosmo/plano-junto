@@ -86,8 +86,8 @@ const Header = () => {
           <div className="hidden md:flex items-center space-x-3 flex-shrink-0">
             {user ? (
               <>
-                <Button size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-4 py-2 rounded-lg">
-                  + Criar Grupo
+                <Button size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-4 py-2 rounded-lg" asChild>
+                  <Link to="/create-group">+ Criar Grupo</Link>
                 </Button>
                 <div className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-medium">
                   1
