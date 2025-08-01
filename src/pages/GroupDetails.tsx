@@ -232,7 +232,7 @@ const GroupDetails = () => {
                   ) : (
                     <p className="text-gray-600 text-sm">O administrador não forneceu nenhuma regra para este grupo.</p>
                   )}
-                </div>
+              </div>
                 
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2 text-sm">Outras informações</h3>
@@ -243,7 +243,7 @@ const GroupDetails = () => {
                   ) : (
                     <p className="text-gray-600 text-sm">Nenhuma informação adicional fornecida.</p>
                   )}
-                </div>
+            </div>
 
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2 text-sm">Situação</h3>
@@ -291,7 +291,7 @@ const GroupDetails = () => {
                       Ligar
                     </Button>
                   </div>
-                </div>
+                        </div>
                     </div>
                 </div>
 
@@ -307,14 +307,14 @@ const GroupDetails = () => {
                                <AvatarFallback className="bg-blue-100 text-blue-600">
                                  {membership.user_id.charAt(0).toUpperCase()}
                                </AvatarFallback>
-                             </Avatar>
+                                </Avatar>
                              <span className="font-medium text-sm">Membro {index + 1}</span>
                            </div>
-                         ))}
-                       </div>
-                     ) : (
+                            ))}
+                        </div>
+                    ) : (
                        <p className="text-gray-600 text-sm">Seja o primeiro a entrar!</p>
-                     )}
+                    )}
                 </div>
 
             {/* Seção Dúvidas Frequentes */}
@@ -432,23 +432,23 @@ const GroupDetails = () => {
                     <div className={`absolute top-0 left-0 h-2 rounded-full w-1/3 transition-colors ${selectedPlan === 'assinatura' ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
                     <div className={`absolute top-0 left-1/3 h-2 rounded-full w-1/3 transition-colors ${selectedPlan === 'proximos' ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
                     <div className={`absolute top-0 left-2/3 h-2 rounded-full w-1/3 transition-colors ${selectedPlan === 'ultimo' ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                  </div>
+              </div>
                   <div className="flex justify-between items-center mt-2">
                     <div className="text-center cursor-pointer" onClick={() => setSelectedPlan('assinatura')}>
                       <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${selectedPlan === 'assinatura' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                       <p className="text-xs text-gray-500 line-through">{formatPrice(totalPrice)}</p>
                       <p className="text-xs font-medium">{formatPrice(group.price_per_slot_cents)}</p>
-                    </div>
+              </div>
                     <div className="text-center cursor-pointer" onClick={() => setSelectedPlan('proximos')}>
                       <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${selectedPlan === 'proximos' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                       <p className="text-xs font-medium text-gray-900">{formatPrice(group.price_per_slot_cents)}</p>
-                    </div>
+              </div>
                     <div className="text-center cursor-pointer" onClick={() => setSelectedPlan('ultimo')}>
                       <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${selectedPlan === 'ultimo' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                       <p className="text-xs font-medium text-green-600">Grátis</p>
-                    </div>
-                  </div>
-                </div>
+              </div>
+              </div>
+              </div>
                 
               <Button 
                   className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg"
