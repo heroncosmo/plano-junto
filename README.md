@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# JuntaPlay - Economize em Assinaturas
 
-## Project info
+## Sobre o Projeto
 
-**URL**: https://lovable.dev/projects/bed6ea0d-a19c-4752-86ec-cc99a1f1f84e
+JuntaPlay é uma plataforma que permite que pessoas se juntem para economizar em assinaturas de streaming, música, educação e muito mais. Junte-se a milhares de pessoas economizando juntas!
 
-## How can I edit this code?
+## Como editar este código?
 
-There are several ways of editing your application.
+Existem várias maneiras de editar sua aplicação.
 
-**Use Lovable**
+**Use seu IDE preferido**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bed6ea0d-a19c-4752-86ec-cc99a1f1f84e) and start prompting.
+Se você quiser trabalhar localmente usando seu próprio IDE, você pode clonar este repo e fazer push das mudanças.
 
-Changes made via Lovable will be committed automatically to this repo.
+O único requisito é ter Node.js & npm instalados - [instale com nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Siga estes passos:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Passo 1: Clone o repositório usando a URL Git do projeto.
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Passo 2: Navegue até o diretório do projeto.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
+# Passo 3: Instale as dependências necessárias.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Passo 4: Inicie o servidor de desenvolvimento com auto-reload e preview instantâneo.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+**Edite um arquivo diretamente no GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Navegue até o(s) arquivo(s) desejado(s).
+- Clique no botão "Edit" (ícone de lápis) no canto superior direito da visualização do arquivo.
+- Faça suas mudanças e faça commit das mudanças.
 
 **Use GitHub Codespaces**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Navegue até a página principal do seu repositório.
+- Clique no botão "Code" (botão verde) próximo ao canto superior direito.
+- Selecione a aba "Codespaces".
+- Clique em "New codespace" para iniciar um novo ambiente Codespace.
+- Edite arquivos diretamente dentro do Codespace e faça commit e push das suas mudanças quando terminar.
 
-## What technologies are used for this project?
+## Quais tecnologias são usadas neste projeto?
 
-This project is built with:
+Este projeto é construído com:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (PostgreSQL)
 
-## How can I deploy this project?
+## Como posso fazer deploy deste projeto?
 
-Simply open [Lovable](https://lovable.dev/projects/bed6ea0d-a19c-4752-86ec-cc99a1f1f84e) and click on Share -> Publish.
+Você pode fazer deploy usando qualquer plataforma de hospedagem que suporte aplicações React/Vite, como:
 
-## Can I connect a custom domain to my Lovable project?
+- Vercel
+- Netlify
+- GitHub Pages
+- Railway
+- Render
 
-Yes, you can!
+## Funcionalidades Principais
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- ✅ **Grupos de Assinatura**: Crie e participe de grupos para economizar
+- ✅ **Fluxo de Checkout**: Processo completo de pagamento
+- ✅ **Múltiplos Métodos de Pagamento**: Saldo, PIX, Cartão de Crédito
+- ✅ **Interface Responsiva**: Funciona perfeitamente em mobile e desktop
+- ✅ **Design Minimalista**: Seguindo as melhores práticas de UX
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Estrutura do Projeto
+
+```
+src/
+├── components/     # Componentes reutilizáveis
+├── pages/         # Páginas da aplicação
+├── hooks/         # Custom hooks
+├── contexts/      # Contextos React
+├── integrations/  # Integrações externas (Supabase)
+└── lib/          # Utilitários
+```
+
+## Contribuindo
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
