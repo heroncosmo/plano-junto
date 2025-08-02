@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
@@ -21,6 +21,8 @@ import {
   Wallet
 } from 'lucide-react';
 import { useGroupById, formatPrice } from '@/hooks/useGroups';
+import { getUserProfile, processGroupPayment } from '@/integrations/supabase/functions';
+import { useToast } from '@/hooks/use-toast';
 
 type PaymentMethod = 'balance' | 'pix' | 'card';
 
@@ -29,18 +31,45 @@ const Payment = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('balance');
   const [showMoreMethods, setShowMoreMethods] = useState(false);
   const [showCardForm, setShowCardForm] = useState(false);
   const [showPixQr, setShowPixQr] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [processing, setProcessing] = useState(false);
+  const [userBalance, setUserBalance] = useState(0);
+  const [loadingBalance, setLoadingBalance] = useState(true);
 
   const relationship = searchParams.get('relationship') || 'familia';
   const { group, loading, error } = useGroupById(id || '');
 
-  // Simulated user balance - more realistic value
-  const userBalance = 13500; // R$ 135,00 in cents (enough to pay for the service)
+  // Carregar saldo real do usuário
+  useEffect(() => {
+    const loadUserBalance = async () => {
+      try {
+        setLoadingBalance(true);
+        const profile = await getUserProfile();
+        if (profile) {
+          setUserBalance(profile.balance_cents || 0);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar saldo:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar seu saldo.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingBalance(false);
+      }
+    };
+
+    if (user) {
+      loadUserBalance();
+    }
+  }, [user, toast]);
+
   const monthlyFee = group?.price_per_slot_cents || 6750; // R$ 67,50
   const deposit = monthlyFee;
   const total = monthlyFee + deposit;
@@ -54,21 +83,56 @@ const Payment = () => {
   };
 
   const handlePayment = async () => {
+    if (!group || !user) return;
+    
     setProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    if (paymentMethod === 'pix') {
-      setShowPixQr(true);
-    } else if (paymentMethod === 'card') {
-      setShowCardForm(true);
-    } else {
-      // Balance payment - simulate success
-      navigate(`/payment/success/${id}`);
+    try {
+      let paymentMethodParam: 'credits' | 'pix' | 'credit_card' | 'debit_card';
+      
+      switch (paymentMethod) {
+        case 'balance':
+          paymentMethodParam = 'credits';
+          break;
+        case 'pix':
+          paymentMethodParam = 'pix';
+          break;
+        case 'card':
+          paymentMethodParam = 'credit_card';
+          break;
+        default:
+          paymentMethodParam = 'credits';
+      }
+
+      const result = await processGroupPayment(
+        group.id,
+        monthlyFee,
+        paymentMethodParam
+      );
+
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: "Pagamento processado com sucesso!",
+        });
+        navigate(`/payment/success/${id}`);
+      } else {
+        toast({
+          title: "Erro",
+          description: result.error || "Erro ao processar pagamento",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Erro no pagamento:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao processar pagamento",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
     }
-    
-    setProcessing(false);
   };
 
   const handleBack = () => {
@@ -115,7 +179,7 @@ const Payment = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-gray-900">{group.name}</h3>
-                        <p className="text-sm text-gray-600">{group.service?.name}</p>
+                        <p className="text-sm text-gray-600">{group.services?.name || 'Serviço não disponível'}</p>
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-gray-500">Cota</span>

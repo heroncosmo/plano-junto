@@ -163,8 +163,8 @@ const JoinGroup = () => {
               className="mt-0.5"
             />
             <label htmlFor="terms" className="text-xs text-gray-700 leading-relaxed">
-              Confirmo estar ciente de que a plataforma JuntaPlay não está associada ou afiliada ao serviço {group.service.name}. 
-              Concordo em cumprir integralmente os termos do serviço {group.service.name} e da plataforma JuntaPlay.
+                      Confirmo estar ciente de que a plataforma JuntaPlay não está associada ou afiliada ao serviço {group.services?.name || 'Serviço não disponível'}.
+        Concordo em cumprir integralmente os termos do serviço {group.services?.name || 'Serviço não disponível'} e da plataforma JuntaPlay.
             </label>
           </div>
         </div>

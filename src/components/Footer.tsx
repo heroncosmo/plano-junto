@@ -27,22 +27,22 @@ const Footer = () => {
             <h3 className="font-semibold">Serviços</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/grupos" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/groups" className="text-muted-foreground hover:text-foreground transition-colors">
                   Encontrar Grupos
                 </Link>
               </li>
               <li>
-                <Link to="/criar-grupo" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/create-group" className="text-muted-foreground hover:text-foreground transition-colors">
                   Criar Grupo
                 </Link>
               </li>
               <li>
-                <Link to="/como-funciona" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/ajuda" className="text-muted-foreground hover:text-foreground transition-colors">
                   Como Funciona
                 </Link>
               </li>
               <li>
-                <Link to="/servicos" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/groups" className="text-muted-foreground hover:text-foreground transition-colors">
                   Serviços Disponíveis
                 </Link>
               </li>
@@ -59,17 +59,17 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/contato" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/ajuda" className="text-muted-foreground hover:text-foreground transition-colors">
                   Fale Conosco
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/ajuda" className="text-muted-foreground hover:text-foreground transition-colors">
                   Perguntas Frequentes
                 </Link>
               </li>
               <li>
-                <Link to="/seguranca" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/ajuda" className="text-muted-foreground hover:text-foreground transition-colors">
                   Segurança
                 </Link>
               </li>
@@ -81,23 +81,18 @@ const Footer = () => {
             <h3 className="font-semibold">Legal</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/termos-de-uso" className="text-muted-foreground hover:text-foreground transition-colors">
                   Termos de Uso
                 </Link>
               </li>
               <li>
-                <Link to="/privacidade" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/politica-de-privacidade" className="text-muted-foreground hover:text-foreground transition-colors">
                   Política de Privacidade
                 </Link>
               </li>
               <li>
-                <Link to="/cookies" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Política de Cookies
-                </Link>
-              </li>
-              <li>
-                <Link to="/lgpd" className="text-muted-foreground hover:text-foreground transition-colors">
-                  LGPD
+                <Link to="/taxas" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Taxas
                 </Link>
               </li>
             </ul>

@@ -1,219 +1,466 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Clock, Search, Filter, Star, Loader2 } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useMemo, useEffect } from "react";
-import { useGroups, formatPrice, formatCategory } from "@/hooks/useGroups";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Search, Users, DollarSign, Clock, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getAvailableGroups, fixAllUserGroups } from '@/integrations/supabase/functions';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+
+interface GroupDetailed {
+  id: string;
+  name: string;
+  description: string;
+  max_members: number;
+  current_members: number;
+  price_per_slot_cents: number;
+  status: string;
+  relationship_type: string;
+  created_at: string;
+  services?: {
+    id: string;
+    name: string;
+    category: string;
+    icon_url?: string;
+  };
+  admin_name?: string;
+  availability_status?: string;
+}
 
 const AllGroups = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const { groups, loading, error } = useGroups();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.email === 'calcadosdrielle@gmail.com';
+  const [grupos, setGrupos] = useState<GroupDetailed[]>([]);
+  const [gruposFiltrados, setGruposFiltrados] = useState<GroupDetailed[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [relationshipFilter, setRelationshipFilter] = useState('all');
+  const [priceFilter, setPriceFilter] = useState('all');
 
-  // Capturar parâmetro de busca da URL
   useEffect(() => {
-    const urlSearch = searchParams.get('search');
-    if (urlSearch) {
-      setSearchTerm(urlSearch);
-    }
-  }, [searchParams]);
+    loadAvailableGroups();
+  }, []);
 
-  const getGroupImage = (category: string) => {
-    const imageMap: Record<string, string> = {
-      'ai_tools': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400',
-      'streaming': 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=400',
-      'gaming': 'https://images.unsplash.com/photo-1606318664588-f04fcec5f817?w=400',
-      'design': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
-      'education': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400',
-      'productivity': 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=400'
-    };
-    return imageMap[category] || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400';
+  useEffect(() => {
+    filterGroups();
+  }, [grupos, searchTerm, categoryFilter, relationshipFilter, priceFilter]);
+
+  const loadAvailableGroups = async () => {
+    try {
+      setLoading(true);
+      const groups = await getAvailableGroups();
+      setGrupos(groups);
+    } catch (error) {
+      console.error('Erro ao carregar grupos:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os grupos. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Filtrar grupos baseado na busca e categoria
-  const filteredGroups = useMemo(() => {
-    return groups.filter(group => {
-      const matchesSearch = group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           group.service.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === "all" || group.service.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+  const filterGroups = () => {
+    let filtered = grupos;
+
+    // Filtro por texto
+    if (searchTerm) {
+      filtered = filtered.filter(group =>
+        group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (group.services?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        group.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtro por categoria
+    if (categoryFilter && categoryFilter !== 'all') {
+      filtered = filtered.filter(group => group.services?.category === categoryFilter);
+    }
+
+    // Filtro por tipo de relacionamento
+    if (relationshipFilter && relationshipFilter !== 'all') {
+      filtered = filtered.filter(group => group.relationship_type === relationshipFilter);
+    }
+
+    // Filtro por faixa de preço
+    if (priceFilter && priceFilter !== 'all') {
+      const [min, max] = priceFilter.split('-').map(Number);
+      filtered = filtered.filter(group => {
+        const price = group.price_per_slot_cents;
+        if (max) {
+          return price >= min && price <= max;
+        } else {
+          return price >= min;
+        }
+      });
+    }
+
+    setGruposFiltrados(filtered);
+  };
+
+  const formatCurrency = (centavos: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(centavos / 100);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     });
-  }, [groups, searchTerm, selectedCategory]);
+  };
 
-  const categories = [
-    { value: "all", label: "Todas as categorias" },
-    { value: "ai_tools", label: "IA & Produtividade" },
-    { value: "streaming", label: "Streaming" },
-    { value: "gaming", label: "Jogos" },
-    { value: "design", label: "Design & Criatividade" },
-    { value: "education", label: "Educação" },
-    { value: "productivity", label: "Software" }
-  ];
+  const getCategoryLabel = (category: string) => {
+    const labels: { [key: string]: string } = {
+      'streaming': 'Streaming',
+      'music': 'Música',
+      'education': 'Educação',
+      'ai': 'Inteligência Artificial',
+      'gaming': 'Jogos',
+      'productivity': 'Produtividade',
+      'other': 'Outros',
+      'unknown': 'Não especificado'
+    };
+    return labels[category] || category;
+  };
 
-  const handleGroupClick = (groupId: string) => {
-    navigate(`/group/${groupId}`);
+  const getRelationshipLabel = (type: string) => {
+    const labels: { [key: string]: string } = {
+      'family': 'Família',
+      'friends': 'Amigos',
+      'work': 'Trabalho',
+      'other': 'Outros'
+    };
+    return labels[type] || type;
+  };
+
+  const getAvailabilityColor = (status: string) => {
+    switch (status) {
+      case 'available':
+        return 'bg-green-100 text-green-800';
+      case 'full':
+        return 'bg-red-100 text-red-800';
+      case 'empty':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getAvailabilityLabel = (status: string) => {
+    const labels: { [key: string]: string } = {
+      'available': 'Disponível',
+      'full': 'Completo',
+      'empty': 'Vazio'
+    };
+    return labels[status] || status;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <>
         <Header />
-        <div className="container mx-auto px-4 py-8 flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Carregando grupos...</span>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center mb-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="mr-4"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-2xl font-bold">Carregando...</h1>
+            </div>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
           </div>
         </div>
         <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-red-600">{error}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Tentar novamente
-          </Button>
-        </div>
-        <Footer />
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <Header />
-      
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-        {/* Header da página */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {searchTerm ? `Resultados para "${searchTerm}"` : 'Todos os grupos'}
-          </h1>
-          <p className="text-gray-600">
-            {searchTerm 
-              ? `${filteredGroups.length} grupos encontrados` 
-              : 'Descubra grupos incríveis para economizar em suas assinaturas favoritas'
-            }
-          </p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+        <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="mr-4"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl font-bold">Todos os Grupos</h1>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/create-group')}>
+              Criar Grupo
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setGrupos([]);
+                loadAvailableGroups();
+              }}
+            >
+              Atualizar
+            </Button>
+            {isAdmin && (
+              <Button 
+                onClick={async () => {
+                  try {
+                    await fixAllUserGroups();
+                    toast({
+                      title: "Sucesso",
+                      description: "Grupos corrigidos! Recarregue a página.",
+                    });
+                  } catch (error) {
+                    toast({
+                      title: "Erro",
+                      description: "Erro ao corrigir grupos.",
+                      variant: "destructive",
+                    });
+                  }
+                }} 
+                variant="secondary" 
+                className="ml-2"
+              >
+                Corrigir Meus Grupos
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Filtros</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Busca por texto */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Buscar grupos..."
+                    placeholder="Nome do grupo ou serviço..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+                    className="pl-9"
+                  />
+                </div>
               </div>
+
+              {/* Filtro por categoria */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Categoria</label>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas as categorias" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as categorias</SelectItem>
+                    <SelectItem value="streaming">Streaming</SelectItem>
+                    <SelectItem value="music">Música</SelectItem>
+                    <SelectItem value="education">Educação</SelectItem>
+                    <SelectItem value="ai">IA</SelectItem>
+                    <SelectItem value="gaming">Jogos</SelectItem>
+                    <SelectItem value="productivity">Produtividade</SelectItem>
+                    <SelectItem value="other">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por tipo de relacionamento */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tipo</label>
+                <Select value={relationshipFilter} onValueChange={setRelationshipFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os tipos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os tipos</SelectItem>
+                    <SelectItem value="family">Família</SelectItem>
+                    <SelectItem value="friends">Amigos</SelectItem>
+                    <SelectItem value="work">Trabalho</SelectItem>
+                    <SelectItem value="other">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
             </div>
-            <div className="w-full md:w-64">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+
+              {/* Filtro por preço */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Faixa de Preço</label>
+                <Select value={priceFilter} onValueChange={setPriceFilter}>
                 <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Categoria" />
+                    <SelectValue placeholder="Qualquer preço" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {category.label}
-                    </SelectItem>
-                  ))}
+                    <SelectItem value="all">Qualquer preço</SelectItem>
+                    <SelectItem value="0-1000">Até R$ 10,00</SelectItem>
+                    <SelectItem value="1000-2000">R$ 10,00 - R$ 20,00</SelectItem>
+                    <SelectItem value="2000-3000">R$ 20,00 - R$ 30,00</SelectItem>
+                    <SelectItem value="3000-5000">R$ 30,00 - R$ 50,00</SelectItem>
+                    <SelectItem value="5000">Acima de R$ 50,00</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+          </CardContent>
+        </Card>
+
+        {/* Resultados */}
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-gray-600">
+            {gruposFiltrados.length} grupo(s) encontrado(s)
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSearchTerm('');
+              setCategoryFilter('all');
+              setRelationshipFilter('all');
+              setPriceFilter('all');
+            }}
+          >
+            Limpar Filtros
+          </Button>
         </div>
 
-        {/* Grid de grupos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredGroups.map((group) => {
-            const availableSpots = group.max_members - group.current_members;
-            const isUrgent = availableSpots <= 1;
-            const isFull = availableSpots === 0;
-            const totalPrice = group.price_per_slot_cents * group.max_members;
-            
-            return (
-              <Card 
-                key={group.id} 
-                className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                onClick={() => handleGroupClick(group.id)}
-              >
-                
-                <CardContent className="p-6 text-center space-y-3">
-                  {/* Avatar com inicial */}
-                  <div className="w-16 h-16 mx-auto bg-emerald-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                    {group.service.name.charAt(0).toUpperCase()}
+        {gruposFiltrados.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum grupo encontrado</h3>
+              <p className="text-gray-600 mb-4">
+                Tente ajustar os filtros ou criar um novo grupo
+              </p>
+              <Button onClick={() => navigate('/criar-grupo')}>
+                Criar Novo Grupo
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {gruposFiltrados.map((grupo) => (
+              <Card key={grupo.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      {grupo.services?.icon_url && (
+                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <img 
+                            src={grupo.services.icon_url} 
+                            alt={grupo.services.name}
+                            className="w-8 h-8"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <CardTitle className="text-lg">{grupo.name}</CardTitle>
+                        <CardDescription>{grupo.services?.name || 'Serviço não disponível'}</CardDescription>
+                      </div>
+                    </div>
+                    <Badge className={getAvailabilityColor(grupo.current_members >= grupo.max_members ? 'full' : 'available')}>
+                      {getAvailabilityLabel(grupo.current_members >= grupo.max_members ? 'full' : 'available')}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Vagas:</span>
+                      <span className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {grupo.current_members}/{grupo.max_members}
+                      </span>
                   </div>
                   
-                  {/* Nome do serviço */}
-                  <h3 className="font-semibold text-gray-900 text-sm">
-                    {group.service.name}
-                  </h3>
-                  
-                  
-                  
-                  {/* Número de vagas */}
-                  <p className="text-sm text-gray-600 font-medium">
-                    {group.max_members} Vagas
-                  </p>
-                  
-                  {/* Preço */}
-                  <p className="text-xl font-bold text-gray-900">
-                    {formatPrice(group.price_per_slot_cents)}
-                  </p>
-                  
-                                          {/* Status */}
-                                                 <p className="text-xs text-gray-500">
-                           {availableSpots > 0 ? 'Assinado, aguardando vendas' : 'Assinado, aguardando membros'}
-                         </p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Preço por vaga:</span>
+                      <span className="flex items-center gap-1 font-medium text-green-600">
+                        <DollarSign className="h-4 w-4" />
+                        {formatCurrency(grupo.price_per_slot_cents)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Criado em:</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {formatDate(grupo.created_at)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {getCategoryLabel(grupo.services?.category || 'unknown')}
+                      </Badge>
+                      <Badge variant="outline">
+                        {getRelationshipLabel(grupo.relationship_type)}
+                      </Badge>
+                    </div>
+                    
+                    {grupo.description && (
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {grupo.description}
+                      </p>
+                    )}
+                    
+                    <div className="text-xs text-gray-500">
+                      Admin: {grupo.admin_name}
+                    </div>
+                    
+                    <Button
+                      onClick={() => navigate(`/group/${grupo.id}`)}
+                      className="w-full"
+                      disabled={grupo.current_members >= grupo.max_members}
+                    >
+                      {grupo.current_members >= grupo.max_members ? (
+                        'Grupo Completo'
+                      ) : (
+                        <>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Ver Detalhes
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
-
-        {/* Mensagem quando não há resultados */}
-        {filteredGroups.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum grupo encontrado</h3>
-            <p className="text-gray-500">Tente ajustar os filtros ou buscar por outros termos</p>
+            ))}
           </div>
         )}
-
-        {/* Call to Action */}
-        <div className="mt-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white text-center">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Não encontrou o que procurava?</h2>
-            <p className="text-lg opacity-90">
-              Crie seu próprio grupo e convide outras pessoas para economizar juntas!
-            </p>
-            <Button size="lg" variant="secondary">
-              Criar novo grupo
-            </Button>
           </div>
         </div>
-      </main>
-      
       <Footer />
-    </div>
+   </>
   );
 };
 

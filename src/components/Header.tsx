@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Menu, X, LogOut, Settings, Search } from "lucide-react";
+import { User, Menu, X, LogOut, Settings, Search, CreditCard, FileText, HelpCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -74,9 +74,9 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-4">
-            <Link to="/groups" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              Meus Grupos
-            </Link>
+                         <Link to="/my-groups" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+               Meus Grupos
+             </Link>
             <Link to="/creditos" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Meus Créditos
             </Link>
@@ -102,17 +102,33 @@ const Header = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuItem onClick={() => navigate("/app")}>
-                      <User className="mr-2 h-4 w-4" />
-                      App
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sair
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
+                                     <DropdownMenuContent className="w-56" align="end" forceMount>
+                     <DropdownMenuItem onClick={() => navigate("/perfil")}>
+                       <User className="mr-2 h-4 w-4" />
+                       Perfil
+                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => navigate("/creditos")}>
+                       <CreditCard className="mr-2 h-4 w-4" />
+                       Créditos
+                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => navigate("/creditos")}>
+                       <FileText className="mr-2 h-4 w-4" />
+                       Faturas
+                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => navigate("/groups")}>
+                       <Search className="mr-2 h-4 w-4" />
+                       Pesquisar
+                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => navigate("/ajuda")}>
+                       <HelpCircle className="mr-2 h-4 w-4" />
+                       Ajuda
+                     </DropdownMenuItem>
+                     <DropdownMenuSeparator />
+                     <DropdownMenuItem onClick={handleSignOut}>
+                       <LogOut className="mr-2 h-4 w-4" />
+                       Sair
+                     </DropdownMenuItem>
+                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
             ) : (
@@ -142,13 +158,13 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t">
             <nav className="space-y-2">
-              <Link
-                to="/groups"
-                className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Meus Grupos
-              </Link>
+                             <Link
+                 to="/my-groups"
+                 className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                 onClick={() => setIsMenuOpen(false)}
+               >
+                 Meus Grupos
+               </Link>
               <Link
                 to="/creditos"
                 className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
@@ -156,26 +172,54 @@ const Header = () => {
               >
                 Meus Créditos
               </Link>
-              {user ? (
-                <>
-                  <Link
-                    to="/app"
-                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    App
-                  </Link>
-                  <button
-                    onClick={() => {
-                      handleSignOut();
-                      setIsMenuOpen(false);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    Sair
-                  </button>
-                </>
-              ) : (
+                             {user ? (
+                 <>
+                   <Link
+                     to="/perfil"
+                     className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                     onClick={() => setIsMenuOpen(false)}
+                   >
+                     Perfil
+                   </Link>
+                   <Link
+                     to="/creditos"
+                     className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                     onClick={() => setIsMenuOpen(false)}
+                   >
+                     Créditos
+                   </Link>
+                   <Link
+                     to="/creditos"
+                     className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                     onClick={() => setIsMenuOpen(false)}
+                   >
+                     Faturas
+                   </Link>
+                   <Link
+                     to="/groups"
+                     className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                     onClick={() => setIsMenuOpen(false)}
+                   >
+                     Pesquisar
+                   </Link>
+                   <Link
+                     to="/ajuda"
+                     className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                     onClick={() => setIsMenuOpen(false)}
+                   >
+                     Ajuda
+                   </Link>
+                   <button
+                     onClick={() => {
+                       handleSignOut();
+                       setIsMenuOpen(false);
+                     }}
+                     className="block w-full text-left px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                   >
+                     Sair
+                   </button>
+                 </>
+               ) : (
                 <>
                   <Link
                     to="/auth"

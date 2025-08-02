@@ -88,18 +88,38 @@ const CreateGroupPlan = () => {
 
   const plans = service ? getPlansForService(service) : [];
 
+  // Pré-selecionar automaticamente se há apenas um plano
+  useEffect(() => {
+    if (plans.length === 1 && !selectedPlan) {
+      setSelectedPlan(plans[0]);
+    }
+  }, [plans, selectedPlan]);
+
   const formatPrice = (priceCents: number) => {
     return `R$ ${(priceCents / 100).toFixed(2).replace('.', ',')}`;
   };
 
   const handlePlanSelect = (plan: PlanOption) => {
+    console.log('Plano selecionado:', plan);
     setSelectedPlan(plan);
+    // Navegar automaticamente para a página de fidelidade
+    navigate('/create-group/fidelity', {
+      state: {
+        service,
+        plan: plan
+      }
+    });
   };
 
   const handleContinue = () => {
-    if (!selectedPlan || !service) return;
+    console.log('Botão Continuar clicado, selectedPlan:', selectedPlan);
+    // Se não há plano selecionado, não fazer nada
+    if (!selectedPlan || !service) {
+      alert('Por favor, selecione um plano primeiro');
+      return;
+    }
     
-    navigate('/create-group/info', {
+    navigate('/create-group/fidelity', {
       state: {
         service,
         plan: selectedPlan
@@ -113,11 +133,11 @@ const CreateGroupPlan = () => {
 
   if (!service) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <p className="text-muted-foreground">Serviço não encontrado</p>
+            <p className="text-gray-600">Serviço não encontrado</p>
             <Button onClick={() => navigate('/create-group')} className="mt-4">
               Voltar
             </Button>
@@ -129,7 +149,7 @@ const CreateGroupPlan = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <Header />
       
       <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -137,7 +157,7 @@ const CreateGroupPlan = () => {
         <Button 
           variant="ghost" 
           onClick={handleBack}
-          className="mb-6 p-0 h-auto text-muted-foreground hover:text-foreground"
+          className="mb-6 p-0 h-auto text-gray-600 hover:text-gray-900 transition-colors"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Voltar
@@ -145,59 +165,59 @@ const CreateGroupPlan = () => {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-3xl font-bold mb-2 text-gray-900">
             Escolha um dos planos disponíveis para {service.name}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600">
             Selecione o plano que melhor se adequa às suas necessidades
           </p>
         </div>
 
         {/* Plans */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {plans.map((plan) => (
             <Card 
               key={plan.id}
-              className={`cursor-pointer transition-all ${
+              className={`cursor-pointer transition-all duration-200 bg-white border-gray-200 ${
                 selectedPlan?.id === plan.id 
-                  ? 'ring-2 ring-primary border-primary' 
-                  : 'hover:shadow-md'
+                  ? 'ring-2 ring-cyan-500 border-cyan-500 shadow-lg' 
+                  : 'hover:shadow-md hover:border-cyan-300'
               }`}
               onClick={() => handlePlanSelect(plan)}
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="font-semibold text-lg">{plan.name}</h3>
-                      <Badge variant="secondary">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <h3 className="font-semibold text-lg text-gray-900">{plan.name}</h3>
+                      <Badge variant="secondary" className="bg-cyan-100 text-cyan-800">
                         {plan.relationshipType}
                       </Badge>
                     </div>
-                    <p className="text-muted-foreground mb-4">
+                    <p className="text-gray-600 mb-4 text-sm">
                       {plan.description}
                     </p>
                     
-                    <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-8">
                       <div>
-                        <p className="text-sm text-muted-foreground">Membros</p>
-                        <p className="font-semibold">{plan.maxUsers}</p>
+                        <p className="text-sm text-gray-500">Membros</p>
+                        <p className="font-semibold text-gray-900">{plan.maxUsers}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Valor do serviço</p>
-                        <p className="font-semibold">{formatPrice(plan.priceTotal)}</p>
+                        <p className="text-sm text-gray-500">Valor do serviço</p>
+                        <p className="font-semibold text-gray-900">{formatPrice(plan.priceTotal)}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Valor promocional</p>
-                        <p className="text-sm text-muted-foreground">Não</p>
+                        <p className="text-sm text-gray-500">Valor promocional</p>
+                        <p className="text-sm text-gray-500">Não</p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="text-right ml-6">
-                    <p className="text-sm text-muted-foreground">Vagas Totais</p>
-                    <p className="text-2xl font-bold">{plan.maxUsers}</p>
-                    <p className="text-sm text-muted-foreground">1 vaga restante</p>
+                  <div className="text-right ml-8">
+                    <p className="text-sm text-gray-500">Vagas Totais</p>
+                    <p className="text-2xl font-bold text-gray-900">{plan.maxUsers}</p>
+                    <p className="text-sm text-gray-500">1 vaga restante</p>
                   </div>
                 </div>
               </CardContent>
@@ -209,11 +229,10 @@ const CreateGroupPlan = () => {
         <div className="mt-8 text-center">
           <Button 
             onClick={handleContinue}
-            disabled={!selectedPlan}
             size="lg"
-            className="w-full max-w-md"
+            className="w-full max-w-md bg-cyan-500 hover:bg-cyan-600 text-white"
           >
-            Voltar
+            Continuar
           </Button>
         </div>
       </main>

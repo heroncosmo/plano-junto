@@ -44,7 +44,7 @@ const CreateGroupInfo = () => {
   const [groupInfo, setGroupInfo] = useState<GroupInfo>({
     name: plan ? `${plan.name} de Oriene` : '',
     description: 'Ação Descrição',
-    rules: '',
+    rules: '1. Não compartilhe a senha com ninguém fora deste grupo de assinatura\n2. Não utilize esta conta compartilhada para postar em meu nome do administrador\n3. Não altere a senha do grupo',
     relationshipType: plan?.relationshipType || 'família',
     site: 'https://www.youtube.com/premium',
     pricePerSlot: plan?.pricePerUser || 0
@@ -66,7 +66,7 @@ const CreateGroupInfo = () => {
   };
 
   const handleContinue = () => {
-    navigate('/create-group/fidelity', {
+    navigate('/create-group/confirmation', {
       state: {
         service,
         plan,
@@ -134,7 +134,18 @@ const CreateGroupInfo = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="relationship">Regras: Não compartilhe a senha e...</Label>
+                  <Label htmlFor="rules">Regras</Label>
+                  <Textarea
+                    id="rules"
+                    value={groupInfo.rules}
+                    onChange={(e) => handleInputChange('rules', e.target.value)}
+                    placeholder="Digite as regras do grupo..."
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="relationship">Tipo de relacionamento</Label>
                   <Select 
                     value={groupInfo.relationshipType} 
                     onValueChange={(value) => handleInputChange('relationshipType', value)}
@@ -168,6 +179,17 @@ const CreateGroupInfo = () => {
                     value={groupInfo.site}
                     onChange={(e) => handleInputChange('site', e.target.value)}
                     placeholder="URL do serviço"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="pricePerSlot">Preço por vaga (em centavos)</Label>
+                  <Input
+                    id="pricePerSlot"
+                    type="number"
+                    value={groupInfo.pricePerSlot}
+                    onChange={(e) => handleInputChange('pricePerSlot', parseInt(e.target.value) || 0)}
+                    placeholder="Digite o preço por vaga"
                   />
                 </div>
               </CardContent>
@@ -259,9 +281,9 @@ const CreateGroupInfo = () => {
           <Button 
             onClick={handleContinue}
             size="lg"
-            className="w-full max-w-md"
+            className="w-full max-w-md bg-cyan-500 hover:bg-cyan-600 text-white"
           >
-            Voltar
+            Criar Grupo
           </Button>
         </div>
       </main>

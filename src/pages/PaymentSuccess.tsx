@@ -44,7 +44,7 @@ const PaymentSuccess = () => {
               <CardContent className="p-6">
                 <div className="text-center">
                   <h3 className="font-semibold text-gray-900 mb-2">{group.name}</h3>
-                  <p className="text-sm text-gray-600 mb-4">{group.service.name}</p>
+                  <p className="text-sm text-gray-600 mb-4">{group.services?.name || 'Serviço não disponível'}</p>
                   
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">

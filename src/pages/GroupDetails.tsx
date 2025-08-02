@@ -44,7 +44,7 @@ const GroupDetails = () => {
   const { groups: allGroups } = useGroups();
 
   const relatedGroups = allGroups
-    .filter(g => g.id !== id && g.service.category === group?.service.category)
+    .filter(g => g.id !== id && g.services?.category === group?.services?.category)
     .slice(0, 4);
 
   const faqs = [
@@ -122,7 +122,7 @@ const GroupDetails = () => {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <h1 className="text-xl font-bold text-gray-900 mb-2">
-                    {group.service.name} - {group.name}
+                    {group.services?.name || 'Serviço não disponível'} - {group.name}
                   </h1>
                   <p className="text-base text-gray-600 mb-3">Plus</p>
                   <p className="text-gray-700 leading-relaxed mb-4 text-sm">
@@ -352,10 +352,10 @@ const GroupDetails = () => {
                         <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
                           <Link to={`/group/${group.id}`}>
                         <CardContent className="p-3 text-center space-y-2">
-                          <div className="w-10 h-10 mx-auto bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                {getServiceInitial(group.service.name)}
-                              </div>
-                          <h3 className="font-semibold text-gray-900 text-xs line-clamp-2">{group.service.name}</h3>
+                                                      <div className="w-10 h-10 mx-auto bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                              {getServiceInitial(group.services?.name || 'S')}
+                            </div>
+                            <h3 className="font-semibold text-gray-900 text-xs line-clamp-2">{group.services?.name || 'Serviço não disponível'}</h3>
                           <p className="text-xs text-gray-600 font-medium">{group.max_members} Vagas</p>
                           <p className="text-base font-bold text-gray-900">{formatPrice(group.price_per_slot_cents)}</p>
                           <p className="text-xs text-gray-500">{availableSpots > 0 ? 'Assinado, com vagas' : 'Grupo completo'}</p>

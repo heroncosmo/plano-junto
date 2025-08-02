@@ -17,7 +17,7 @@ export interface Group {
   admin_seals?: string[];
   situation?: string;
   other_info?: string;
-  service: {
+  services?: {
     id: string;
     name: string;
     category: string;
@@ -39,19 +39,19 @@ export const useGroups = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('groups')
-        .select(`
-          *,
-          service:services (
-            id,
-            name,
-            category,
-            icon_url
-          )
-        `)
-        .eq('status', 'active_with_slots')
-        .order('created_at', { ascending: false });
+              const { data, error } = await supabase
+          .from('groups')
+          .select(`
+            *,
+            services:service_id (
+              id,
+              name,
+              category,
+              icon_url
+            )
+          `)
+          .eq('status', 'active_with_slots')
+          .order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -93,7 +93,7 @@ export const useGroupById = (groupId: string) => {
           .from('groups')
           .select(`
             *,
-            service:services (
+            services:service_id (
               id,
               name,
               category,
@@ -141,7 +141,7 @@ export const useGroupsByCategory = (category?: string) => {
           .from('groups')
           .select(`
             *,
-            service:services (
+            services:service_id (
               id,
               name,
               category,
@@ -151,7 +151,7 @@ export const useGroupsByCategory = (category?: string) => {
           .eq('status', 'active_with_slots');
 
         if (category && category !== 'all') {
-          query = query.eq('service.category', category);
+          query = query.eq('services.category', category);
         }
 
         const { data, error } = await query.order('created_at', { ascending: false });

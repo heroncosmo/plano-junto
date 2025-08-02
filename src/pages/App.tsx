@@ -45,6 +45,7 @@ const App = () => {
   });
 
   const getServiceInitial = (serviceName: string) => {
+    if (!serviceName || serviceName.length === 0) return 'S';
     return serviceName.charAt(0).toUpperCase();
   };
 
@@ -192,12 +193,12 @@ const App = () => {
                       <Link to={`/group/${group.id}`}>
                         <CardContent className="p-6 text-center space-y-3">
                           {/* Avatar com inicial */}
-                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.service.category)} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
-                            {getServiceInitial(group.service.name)}
+                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.services?.category || 'unknown')} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
+                            {getServiceInitial(group.services?.name || 'S')}
                           </div>
                           {/* Nome do serviço */}
                           <h3 className="font-semibold text-gray-900 text-sm">
-                            {group.service.name}
+                            {group.services?.name || 'Serviço não disponível'}
                           </h3>
                           {/* Número de vagas */}
                           <p className="text-sm text-gray-600 font-medium">
@@ -267,12 +268,12 @@ const App = () => {
                       <Link to={`/group/${group.id}`}>
                         <CardContent className="p-6 text-center space-y-3">
                           {/* Avatar com inicial */}
-                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.service.category)} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
-                            {getServiceInitial(group.service.name)}
+                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.services?.category || 'unknown')} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
+                            {getServiceInitial(group.services?.name || 'S')}
                           </div>
                           {/* Nome do serviço */}
                           <h3 className="font-semibold text-gray-900 text-sm">
-                            {group.service.name}
+                            {group.services?.name || 'Serviço não disponível'}
                           </h3>
                           {/* Número de vagas */}
                           <p className="text-sm text-gray-600 font-medium">
@@ -342,12 +343,12 @@ const App = () => {
                       <Link to={`/group/${group.id}`}>
                         <CardContent className="p-6 text-center space-y-3">
                           {/* Avatar com inicial */}
-                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.service.category)} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
-                            {getServiceInitial(group.service.name)}
+                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.services?.category || 'unknown')} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
+                            {getServiceInitial(group.services?.name || 'S')}
                           </div>
                           {/* Nome do serviço */}
                           <h3 className="font-semibold text-gray-900 text-sm">
-                            {group.service.name}
+                            {group.services?.name || 'Serviço não disponível'}
                           </h3>
                           {/* Número de vagas */}
                           <p className="text-sm text-gray-600 font-medium">
