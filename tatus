@@ -1,0 +1,5 @@
+[33ma6b3050[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Atualização completa do sistema: adicionadas funcionalidades de cancelamento, reclamações, notificações e melhorias no painel admin
+[33m286cd08[m Fix: Adiciona vercel.json para resolver erro 404 e configuração de roteamento SPA
+[33m2ae7c20[m Adiciona configuração Vercel para resolver erro 404 - SPA routing
+[33m060269d[m Atualização completa do projeto: novas funcionalidades, correções e melhorias
+[33m3ab0086[m feat: ultra-compact create-group layout - everything on first screen
