@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAvailableGroups, fixAllUserGroups } from '@/integrations/supabase/functions';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdmin } from '@/lib/admin-config';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -36,7 +37,7 @@ const AllGroups = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const isAdmin = user?.email === 'calcadosdrielle@gmail.com';
+  const adminStatus = isAdmin(user?.email);
   const [grupos, setGrupos] = useState<GroupDetailed[]>([]);
   const [gruposFiltrados, setGruposFiltrados] = useState<GroupDetailed[]>([]);
   const [loading, setLoading] = useState(true);
@@ -226,7 +227,7 @@ const AllGroups = () => {
             >
               Atualizar
             </Button>
-            {isAdmin && (
+                            {adminStatus && (
               <Button 
                 onClick={async () => {
                   try {

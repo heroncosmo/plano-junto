@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { processWithdrawal, getAllClients, getAllTransactions, getClientTransactions, getSystemStats, getCompleteClientInfo } from '@/integrations/supabase/functions';
+import { isAdmin } from '@/lib/admin-config';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ClientDetailsModal from '@/components/ClientDetailsModal';
@@ -102,7 +103,7 @@ const AdminPanel = () => {
   const [copiedStates, setCopiedStates] = useState<{[key: string]: boolean}>({});
 
   // Verificar se é admin
-  const isAdmin = user?.email === 'calcadosdrielle@gmail.com';
+  const adminStatus = isAdmin(user?.email);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -492,7 +493,7 @@ const AdminPanel = () => {
     setSelectedClientForDetails({ id: clientId, name: clientName });
   };
 
-  if (!isAdmin) {
+  if (!adminStatus) {
     return null;
   }
 

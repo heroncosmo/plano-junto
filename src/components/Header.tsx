@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { User, Menu, X, LogOut, Settings, Search, CreditCard, FileText, HelpCircle, Shield, Bell, AlertTriangle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { isAdmin } from "@/lib/admin-config";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +41,7 @@ const Header = () => {
   };
 
   // Verificar se é admin
-  const isAdmin = user?.email === 'calcadosdrielle@gmail.com';
+  const adminStatus = isAdmin(user?.email);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,7 +163,7 @@ const Header = () => {
                        <HelpCircle className="mr-2 h-4 w-4" />
                        Ajuda
                      </DropdownMenuItem>
-                     {isAdmin && (
+                     {adminStatus && (
                        <>
                          <DropdownMenuSeparator />
                          <DropdownMenuItem onClick={() => navigate("/admin")}>
