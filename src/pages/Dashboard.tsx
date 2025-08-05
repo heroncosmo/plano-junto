@@ -47,7 +47,8 @@ const Dashboard = () => {
             services (name, category)
           )
         `)
-        .eq('user_id', user?.id);
+        .eq('user_id', user?.id)
+        .eq('status', 'active');
 
       const { data: adminGroups } = await supabase
         .from('groups')
@@ -56,7 +57,8 @@ const Dashboard = () => {
           services (name, category),
           group_memberships (count)
         `)
-        .eq('admin_id', user?.id);
+        .eq('admin_id', user?.id)
+        .eq('status', 'active_with_slots');
 
       setMyGroups([...(membershipData || []), ...(adminGroups || [])]);
 
@@ -68,6 +70,8 @@ const Dashboard = () => {
           services (name, category, icon_url)
         `)
         .eq('admin_approved', true)
+        .eq('owner_approved', true)
+        .eq('status', 'active_with_slots')
         .neq('admin_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(8);
@@ -89,7 +93,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -136,7 +140,7 @@ const Dashboard = () => {
                   <p className="text-sm text-muted-foreground">Meus Grupos</p>
                   <p className="text-2xl font-bold">{myGroups.length}</p>
                 </div>
-                <Users className="h-8 w-8 text-primary" />
+                <Users className="h-8 w-8 text-cyan-600" />
               </div>
             </CardContent>
           </Card>
@@ -150,7 +154,7 @@ const Dashboard = () => {
                     R$ {((profile?.balance_cents || 0) / 100).toFixed(2)}
                   </p>
                 </div>
-                <CreditCard className="h-8 w-8 text-primary" />
+                <CreditCard className="h-8 w-8 text-cyan-600" />
               </div>
             </CardContent>
           </Card>
@@ -164,7 +168,7 @@ const Dashboard = () => {
                     {profile?.verification_status === 'verified' ? 'Verificado' : 'Pendente'}
                   </Badge>
                 </div>
-                <Settings className="h-8 w-8 text-primary" />
+                <Settings className="h-8 w-8 text-cyan-600" />
               </div>
             </CardContent>
           </Card>
@@ -273,7 +277,7 @@ const Dashboard = () => {
                   <CardTitle>Saldo Atual</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-primary mb-4">
+                  <p className="text-3xl font-bold text-cyan-600 mb-4">
                     R$ {((profile?.balance_cents || 0) / 100).toFixed(2)}
                   </p>
                   <Button className="w-full">

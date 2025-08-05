@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Menu, X, LogOut, Settings, Search, CreditCard, FileText, HelpCircle } from "lucide-react";
+import { User, Menu, X, LogOut, Settings, Search, CreditCard, FileText, HelpCircle, Shield, Bell, AlertTriangle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -12,21 +12,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import NotificationPanel from "@/components/NotificationPanel";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const Header = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const { stats } = useNotifications();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
+    console.log('🔍 DEBUG - Header: Iniciando handleSignOut...');
+    try {
+      await signOut();
+      console.log('🔍 DEBUG - Header: signOut concluído, redirecionando...');
+      navigate("/");
+      console.log('🔍 DEBUG - Header: Redirecionamento concluído');
+    } catch (error) {
+      console.error('❌ ERRO no handleSignOut:', error);
+    }
   };
 
   const getUserInitials = (email: string) => {
     return email.charAt(0).toUpperCase();
   };
+
+  // Verificar se é admin
+  const isAdmin = user?.email === 'calcadosdrielle@gmail.com';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +66,8 @@ const Header = () => {
         <div className="flex h-16 items-center gap-6">
           {/* Logo */}
           <button onClick={handleLogoClick} className="flex items-center space-x-2 flex-shrink-0">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">J</span>
+            <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">J</span>
             </div>
             <span className="text-xl font-bold">JuntaPlay</span>
           </button>
@@ -89,9 +103,30 @@ const Header = () => {
                 <Button size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-4 py-2 rounded-lg" asChild>
                   <Link to="/create-group">+ Criar Grupo</Link>
                 </Button>
-                <div className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-medium">
-                  1
+                
+                {/* Notification Bell */}
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="relative p-2"
+                    onClick={() => setIsNotificationPanelOpen(!isNotificationPanelOpen)}
+                  >
+                    <Bell className="h-5 w-5 text-gray-600" />
+                    {stats.unread_count > 0 && (
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                        {stats.unread_count > 9 ? '9+' : stats.unread_count}
+                      </div>
+                    )}
+                  </Button>
+                  
+                  {/* Notification Panel */}
+                  <NotificationPanel 
+                    isOpen={isNotificationPanelOpen}
+                    onClose={() => setIsNotificationPanelOpen(false)}
+                  />
                 </div>
+                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -111,6 +146,10 @@ const Header = () => {
                        <CreditCard className="mr-2 h-4 w-4" />
                        Créditos
                      </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => navigate("/reclamacoes")}>
+                       <AlertTriangle className="mr-2 h-4 w-4" />
+                       Reclamações
+                     </DropdownMenuItem>
                      <DropdownMenuItem onClick={() => navigate("/creditos")}>
                        <FileText className="mr-2 h-4 w-4" />
                        Faturas
@@ -123,6 +162,15 @@ const Header = () => {
                        <HelpCircle className="mr-2 h-4 w-4" />
                        Ajuda
                      </DropdownMenuItem>
+                     {isAdmin && (
+                       <>
+                         <DropdownMenuSeparator />
+                         <DropdownMenuItem onClick={() => navigate("/admin")}>
+                           <Shield className="mr-2 h-4 w-4" />
+                           Painel Admin
+                         </DropdownMenuItem>
+                       </>
+                     )}
                      <DropdownMenuSeparator />
                      <DropdownMenuItem onClick={handleSignOut}>
                        <LogOut className="mr-2 h-4 w-4" />
@@ -154,17 +202,36 @@ const Header = () => {
           </Button>
         </div>
 
-        {/* Mobile menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t">
-            <nav className="space-y-2">
-                             <Link
-                 to="/my-groups"
-                 className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
-                 onClick={() => setIsMenuOpen(false)}
-               >
-                 Meus Grupos
-               </Link>
+                  {/* Mobile menu */}
+          {isMenuOpen && (
+            <div className="md:hidden py-4 border-t">
+              <nav className="space-y-2">
+                {/* Notification Bell for Mobile */}
+                {user && (
+                  <button
+                    onClick={() => {
+                      setIsNotificationPanelOpen(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    <Bell className="h-4 w-4 mr-2" />
+                    Notificações
+                    {stats.unread_count > 0 && (
+                      <div className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                        {stats.unread_count > 9 ? '9+' : stats.unread_count}
+                      </div>
+                    )}
+                  </button>
+                )}
+                
+                <Link
+                  to="/my-groups"
+                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Meus Grupos
+                </Link>
               <Link
                 to="/creditos"
                 className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground"

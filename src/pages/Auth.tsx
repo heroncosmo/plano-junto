@@ -153,7 +153,7 @@ const Auth = () => {
                   setIsLogin(!isLogin);
                   setError('');
                 }}
-                className="ml-1 text-primary hover:underline font-medium"
+                className="ml-1 text-cyan-600 hover:underline font-medium"
               >
                 {isLogin ? 'Criar conta' : 'Entrar'}
               </button>

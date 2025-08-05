@@ -33,13 +33,13 @@ LEFT JOIN (
 
 -- View para grupos com informações completas
 CREATE OR REPLACE VIEW groups_detailed AS
-SELECT 
+SELECT
   g.*,
   s.name as service_name,
   s.category as service_category,
   s.icon_url as service_icon,
   p.full_name as admin_name,
-  CASE 
+  CASE
     WHEN g.current_members >= g.max_members THEN 'full'
     WHEN g.current_members = 0 THEN 'empty'
     ELSE 'available'

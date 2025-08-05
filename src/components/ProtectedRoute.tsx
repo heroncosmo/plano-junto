@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, redirectTo = '/app' }: ProtectedRouteProps) 
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Carregando...</p>
         </div>
       </div>

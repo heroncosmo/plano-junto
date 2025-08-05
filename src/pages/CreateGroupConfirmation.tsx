@@ -195,7 +195,7 @@ const CreateGroupConfirmation = () => {
             <h3 className="font-semibold mb-4">Próximos passos</h3>
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                <div className="w-6 h-6 bg-cyan-500 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
                   1
                 </div>
                 <p className="text-sm">Seu grupo foi criado e será analisado pela aprovação.</p>

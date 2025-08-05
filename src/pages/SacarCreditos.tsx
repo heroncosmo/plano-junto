@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, DollarSign, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, DollarSign, Check, AlertCircle, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, requestWithdrawal } from '@/integrations/supabase/functions';
 import { useToast } from '@/hooks/use-toast';
@@ -131,7 +131,9 @@ const SacarCreditos = () => {
     try {
       setLoading(true);
 
+      console.log('💰 Solicitando saque:', { valorCentavos, pixKey });
       const result = await requestWithdrawal(valorCentavos, pixKey);
+      console.log('📤 Resultado da solicitação de saque:', result);
 
       if (result.success) {
         setWithdrawalSuccess(true);
@@ -164,24 +166,28 @@ const SacarCreditos = () => {
 
   if (loadingProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center mb-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/creditos')}
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-2xl font-bold">Carregando...</h1>
-          </div>
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-2xl mx-auto px-4 py-8">
+            <div className="flex items-center mb-8">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/creditos')}
+                className="mr-3 text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-xl font-semibold text-gray-900">Carregando...</h1>
+            </div>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--primary))]"></div>
+            </div>
           </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
@@ -189,39 +195,44 @@ const SacarCreditos = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-          <div className="max-w-2xl mx-auto">
-            <div className="flex items-center mb-6">
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-2xl mx-auto px-4 py-8">
+            <div className="flex items-center mb-8">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/creditos')}
-                className="mr-4"
+                className="mr-3 text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-2xl font-bold">Saque Solicitado</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Saque Solicitado</h1>
             </div>
 
-            <Card className="text-center p-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="h-8 w-8 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-green-600 mb-2">
-                Saque Solicitado!
-              </h2>
-              <p className="text-gray-600 mb-4">
-                Sua solicitação de saque de {formatCurrency(parseInt(valor))} foi enviada
-              </p>
-              <p className="text-sm text-gray-500 mb-2">
-                <strong>Chave PIX:</strong> {pixKey}
-              </p>
-              <p className="text-sm text-gray-500 mb-6">
-                O valor será transferido em até 2 dias úteis
-              </p>
-              <Button onClick={() => navigate('/creditos')}>
-                Voltar aos Créditos
-              </Button>
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="h-8 w-8 text-emerald-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-emerald-600 mb-2">
+                  Saque Solicitado!
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  Sua solicitação de saque de {formatCurrency(parseInt(valor))} foi enviada
+                </p>
+                <p className="text-sm text-gray-500 mb-2">
+                  <strong>Chave PIX:</strong> {pixKey}
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  O valor será transferido em até 2 dias úteis
+                </p>
+                <Button 
+                  onClick={() => navigate('/creditos')}
+                  className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white"
+                >
+                  Voltar aos Créditos
+                </Button>
+              </CardContent>
             </Card>
           </div>
         </div>
@@ -233,150 +244,167 @@ const SacarCreditos = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-2xl mx-auto">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/creditos')}
-            className="mr-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl font-bold">Sacar Créditos</h1>
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="flex items-center mb-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/creditos')}
+              className="mr-3 text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-xl font-semibold text-gray-900">Sacar Créditos</h1>
+          </div>
 
-        {/* Card de Saldo Disponível */}
-        <Card className="mb-6 bg-gradient-to-r from-green-600 to-blue-600 text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Saldo Disponível
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {formatCurrency(saldo)}
-            </div>
-            <p className="text-green-100 text-sm mt-2">
-              Valor mínimo para saque: {formatCurrency(valorMinimo)}
-            </p>
-          </CardContent>
-        </Card>
-
-        {saldo < valorMinimo ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Saldo Insuficiente</h3>
-                <p className="text-gray-600 mb-4">
-                  Você precisa de pelo menos {formatCurrency(valorMinimo)} para solicitar um saque
-                </p>
-                <Button onClick={() => navigate('/creditos/adicionar')}>
-                  Adicionar Créditos
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Solicitar Saque</CardTitle>
-              <CardDescription>
-                Retire seus créditos via PIX
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Valor do Saque */}
-              <div>
-                <Label htmlFor="valor">Valor do saque</Label>
-                <Input
-                  id="valor"
-                  placeholder="Ex: 50,00"
-                  value={valor ? formatCurrency(parseInt(valor)) : ''}
-                  onChange={handleValorChange}
-                  className="mt-1"
-                />
-                <div className="flex justify-between text-sm text-gray-500 mt-1">
-                  <span>Mínimo: {formatCurrency(valorMinimo)}</span>
-                  <span>Máximo: {formatCurrency(Math.min(valorMaximo, saldo))}</span>
+          {/* Card de Saldo Disponível */}
+          <Card className="mb-8 border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Saldo Disponível</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatCurrency(saldo)}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-[hsl(var(--primary)/0.1)] rounded-full flex items-center justify-center">
+                  <Wallet className="h-6 w-6 text-[hsl(var(--primary))]" />
                 </div>
               </div>
-
-              {/* Chave PIX */}
-              <div>
-                <Label htmlFor="pixKey">Chave PIX</Label>
-                <Input
-                  id="pixKey"
-                  placeholder="CPF, CNPJ, email ou telefone"
-                  value={pixKey}
-                  onChange={(e) => setPixKey(e.target.value)}
-                  className="mt-1"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Digite sua chave PIX para receber o valor
-                </p>
-              </div>
-
-              {/* Resumo */}
-              {valor && parseInt(valor) >= valorMinimo && (
-                <Card className="bg-gray-50">
-                  <CardContent className="pt-6">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Valor solicitado:</span>
-                        <span className="font-medium">{formatCurrency(parseInt(valor))}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Taxa de saque:</span>
-                        <span className="font-medium text-green-600">Gratuito</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between font-bold">
-                          <span>Você receberá:</span>
-                          <span className="text-green-600">{formatCurrency(parseInt(valor))}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">Informações importantes:</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• O processamento leva até 2 dias úteis</li>
-                  <li>• Saques são gratuitos</li>
-                  <li>• Você receberá um email de confirmação</li>
-                  <li>• Em caso de problemas, entre em contato conosco</li>
-                </ul>
-              </div>
-
-              <Button
-                onClick={handleSolicitarSaque}
-                disabled={!valor || parseInt(valor) < valorMinimo || parseInt(valor) > saldo || !pixKey || loading}
-                className="w-full"
-                size="lg"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Processando...
-                  </>
-                ) : (
-                  `Solicitar Saque de ${valor ? formatCurrency(parseInt(valor)) : 'R$ 0,00'}`
-                )}
-              </Button>
+              <p className="text-sm text-gray-500">
+                Valor mínimo para saque: {formatCurrency(valorMinimo)}
+              </p>
             </CardContent>
           </Card>
-        )}
+
+          {saldo < valorMinimo ? (
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle className="h-8 w-8 text-amber-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Saldo Insuficiente</h3>
+                <p className="text-gray-600 mb-6">
+                  Você precisa de pelo menos {formatCurrency(valorMinimo)} para solicitar um saque
+                </p>
+                <Button 
+                  onClick={() => navigate('/creditos/adicionar')}
+                  className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white"
+                >
+                  Adicionar Créditos
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-sm bg-white">
+              <CardHeader>
+                <CardTitle>Solicitar Saque</CardTitle>
+                <CardDescription>
+                  Retire seus créditos via PIX
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Valor do Saque */}
+                <div>
+                  <Label htmlFor="valor" className="text-sm font-medium text-gray-700">Valor do saque</Label>
+                  <Input
+                    id="valor"
+                    placeholder="Ex: 50,00"
+                    value={valor ? formatCurrency(parseInt(valor)) : ''}
+                    onChange={handleValorChange}
+                    className="mt-2"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-2">
+                    <span>Mínimo: {formatCurrency(valorMinimo)}</span>
+                    <span>Máximo: {formatCurrency(Math.min(valorMaximo, saldo))}</span>
+                  </div>
+                </div>
+
+                {/* Chave PIX */}
+                <div>
+                  <Label htmlFor="pixKey" className="text-sm font-medium text-gray-700">Chave PIX</Label>
+                  <Input
+                    id="pixKey"
+                    placeholder="CPF, CNPJ, email ou telefone"
+                    value={pixKey}
+                    onChange={(e) => setPixKey(e.target.value)}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Digite sua chave PIX para receber o valor
+                  </p>
+                </div>
+
+                {/* Resumo */}
+                {valor && parseInt(valor) >= valorMinimo && (
+                  <Card className="bg-gray-50 border-0">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Valor solicitado:</span>
+                          <span className="font-medium">{formatCurrency(parseInt(valor))}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Taxa de saque:</span>
+                          <span className="font-medium text-emerald-600">Gratuito</span>
+                        </div>
+                        <div className="border-t pt-3">
+                          <div className="flex justify-between font-semibold">
+                            <span>Você receberá:</span>
+                            <span className="text-emerald-600">{formatCurrency(parseInt(valor))}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <div className="bg-[hsl(var(--primary)/0.05)] p-4 rounded-lg border border-[hsl(var(--primary)/0.1)]">
+                  <h4 className="font-medium text-[hsl(var(--primary))] mb-3">Informações importantes:</h4>
+                  <ul className="text-sm text-gray-700 space-y-2">
+                    <li className="flex items-start">
+                      <span className="text-[hsl(var(--primary))] mr-2">•</span>
+                      O processamento leva até 2 dias úteis
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[hsl(var(--primary))] mr-2">•</span>
+                      Saques são gratuitos
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[hsl(var(--primary))] mr-2">•</span>
+                      Você receberá um email de confirmação
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[hsl(var(--primary))] mr-2">•</span>
+                      Em caso de problemas, entre em contato conosco
+                    </li>
+                  </ul>
+                </div>
+
+                <Button
+                  onClick={handleSolicitarSaque}
+                  disabled={!valor || parseInt(valor) < valorMinimo || parseInt(valor) > saldo || !pixKey || loading}
+                  className="w-full bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-white"
+                  size="lg"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Processando...
+                    </>
+                  ) : (
+                    `Solicitar Saque de ${valor ? formatCurrency(parseInt(valor)) : 'R$ 0,00'}`
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
-    <Footer />
-  </>
-);
+      <Footer />
+    </>
+  );
 };
 
 export default SacarCreditos;

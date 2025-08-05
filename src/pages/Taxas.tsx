@@ -58,12 +58,12 @@ const Taxas = () => {
               <p className="text-gray-700 leading-relaxed mb-4">
                 O JuntaPlay tem uma taxa de administração padrão de R$3,50 por participação, este valor está inserido na mensalidade dos grupos. A taxa serve para cobrir custos da empresa como servidores, suporte, marketing, etc.
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
                 <div className="flex items-start gap-2">
-                  <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <Info className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-blue-800 font-medium mb-1">Taxa Administrativa</p>
-                    <p className="text-blue-700 text-sm">
+                    <p className="text-cyan-800 font-medium mb-1">Taxa Administrativa</p>
+                    <p className="text-cyan-700 text-sm">
                       R$ 3,50 por participação mensal - Incluída automaticamente no valor da vaga
                     </p>
                   </div>
@@ -129,11 +129,11 @@ const Taxas = () => {
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="font-medium">Taxa de Pagamento (PIX)</span>
-                  <span className="text-blue-600 font-semibold">Variável</span>
+                  <span className="text-cyan-600 font-semibold">Variável</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="font-medium">Taxa de Pagamento (Cartão)</span>
-                  <span className="text-blue-600 font-semibold">Variável</span>
+                  <span className="text-cyan-600 font-semibold">Variável</span>
                 </div>
               </div>
             </CardContent>

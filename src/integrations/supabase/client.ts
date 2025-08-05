@@ -34,3 +34,11 @@ export const supabase = createClient(finalSupabaseUrl, finalSupabaseAnonKey, {
     detectSessionInUrl: true
   }
 });
+
+// Debug: Verificar configuração do cliente
+console.log('🔍 DEBUG - Cliente Supabase configurado:', {
+  url: finalSupabaseUrl,
+  hasKey: !!finalSupabaseAnonKey,
+  isLocalhost: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+  currentUrl: window.location.href
+});

@@ -122,3 +122,53 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Função para processar saque (marcar como concluído)
+CREATE OR REPLACE FUNCTION process_withdrawal(
+  withdrawal_uuid UUID
+)
+RETURNS JSON AS $$
+DECLARE
+  withdrawal_record RECORD;
+BEGIN
+  -- Buscar o saque
+  SELECT * INTO withdrawal_record 
+  FROM public.withdrawals 
+  WHERE id = withdrawal_uuid;
+  
+  IF NOT FOUND THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Saque não encontrado'
+    );
+  END IF;
+  
+  IF withdrawal_record.status != 'pending' THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Saque já foi processado'
+    );
+  END IF;
+  
+  -- Marcar saque como concluído
+  UPDATE public.withdrawals 
+  SET 
+    status = 'completed',
+    processed_at = now()
+  WHERE id = withdrawal_uuid;
+  
+  -- Atualizar a transação relacionada
+  UPDATE public.transactions 
+  SET status = 'completed'
+  WHERE user_id = withdrawal_record.user_id 
+    AND type = 'withdrawal' 
+    AND amount_cents = -withdrawal_record.amount_cents
+    AND created_at >= withdrawal_record.created_at - interval '1 minute'
+    AND created_at <= withdrawal_record.created_at + interval '1 minute';
+  
+  RETURN json_build_object(
+    'success', true,
+    'message', 'Saque processado com sucesso'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

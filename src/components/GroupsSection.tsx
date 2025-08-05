@@ -1,103 +1,64 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import GroupCard from "./GroupCard";
-import { Search, Filter, Plus } from "lucide-react";
-
-// Mock data - replace with real data from Supabase
-const mockGroups = [
-  {
-    id: "1",
-    serviceName: "YouTube Premium",
-    groupName: "Família YouTube Premium",
-    description: "Grupo familiar para YouTube Premium com acesso completo sem anúncios",
-    pricePerSlot: 799, // R$ 7,99 in cents
-    currentMembers: 4,
-    maxMembers: 6,
-    status: "active_with_slots" as const,
-    instantAccess: true,
-    relationshipType: "família"
-  },
-  {
-    id: "2",
-    serviceName: "Spotify Premium",
-    groupName: "Amigos Spotify",
-    description: "Compartilhamento entre amigos para Spotify Premium Família",
-    pricePerSlot: 690,
-    currentMembers: 5,
-    maxMembers: 6,
-    status: "active_with_slots" as const,
-    instantAccess: true,
-    relationshipType: "amigos"
-  },
-  {
-    id: "3",
-    serviceName: "Netflix",
-    groupName: "Netflix Família Silva",
-    description: "Plano Premium Netflix para família",
-    pricePerSlot: 1250,
-    currentMembers: 3,
-    maxMembers: 4,
-    status: "active_with_slots" as const,
-    instantAccess: false,
-    relationshipType: "família"
-  },
-  {
-    id: "4",
-    serviceName: "ChatGPT Plus",
-    groupName: "Grupo Profissional AI",
-    description: "ChatGPT Plus para uso profissional",
-    pricePerSlot: 2000,
-    currentMembers: 1,
-    maxMembers: 1,
-    status: "waiting_subscription" as const,
-    instantAccess: false,
-    relationshipType: "trabalho"
-  }
-];
-
-const services = [
-  "Todos",
-  "YouTube Premium",
-  "Netflix", 
-  "Spotify Premium",
-  "Disney+",
-  "Amazon Prime",
-  "HBO Max",
-  "ChatGPT Plus",
-  "Udemy",
-  "Canva Pro"
-];
+import { Search, Filter, Plus, Loader2 } from "lucide-react";
+import { usePublicGroups, PublicGroup } from "@/hooks/usePublicGroups";
+import { useNavigate } from "react-router-dom";
 
 const GroupsSection = () => {
+  const navigate = useNavigate();
+  const { groups, loading, error } = usePublicGroups();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState("Todos");
   const [selectedStatus, setSelectedStatus] = useState("Todos");
+  const [filteredGroups, setFilteredGroups] = useState<PublicGroup[]>([]);
 
-  const filteredGroups = mockGroups.filter(group => {
-    const matchesSearch = group.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         group.groupName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesService = selectedService === "Todos" || group.serviceName === selectedService;
-    const matchesStatus = selectedStatus === "Todos" || 
-                         (selectedStatus === "Acesso Imediato" && group.instantAccess) ||
-                         (selectedStatus === "Aguardando" && group.status === "waiting_subscription") ||
-                         (selectedStatus === "Disponível" && group.status === "active_with_slots");
-    
-    return matchesSearch && matchesService && matchesStatus;
-  });
+  // Extrair serviços únicos dos grupos
+  const services = ["Todos", ...Array.from(new Set(groups.map(group => group.services?.name).filter(Boolean)))];
 
-  // Sort groups: instant access first, then by available slots (fewer slots = higher priority)
-  const sortedGroups = filteredGroups.sort((a, b) => {
-    if (a.instantAccess && !b.instantAccess) return -1;
-    if (!a.instantAccess && b.instantAccess) return 1;
-    
-    const aSlotsLeft = a.maxMembers - a.currentMembers;
-    const bSlotsLeft = b.maxMembers - b.currentMembers;
-    
-    return aSlotsLeft - bSlotsLeft;
-  });
+  // Filtrar e ordenar grupos
+  useEffect(() => {
+    let filtered = groups;
+
+    // Filtro por texto
+    if (searchTerm) {
+      filtered = filtered.filter(group =>
+        group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (group.services?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        group.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtro por serviço
+    if (selectedService !== "Todos") {
+      filtered = filtered.filter(group => group.services?.name === selectedService);
+    }
+
+    // Filtro por status
+    if (selectedStatus !== "Todos") {
+      if (selectedStatus === "Disponível") {
+        filtered = filtered.filter(group => group.status === "active_with_slots");
+      } else if (selectedStatus === "Aguardando") {
+        filtered = filtered.filter(group => group.status === "waiting_subscription");
+      }
+    }
+
+    // Ordenar: grupos com vagas primeiro, depois por data de criação
+    const sorted = filtered.sort((a, b) => {
+      const aSlotsLeft = a.max_members - a.current_members;
+      const bSlotsLeft = b.max_members - b.current_members;
+      
+      if (aSlotsLeft === 0 && bSlotsLeft > 0) return 1;
+      if (bSlotsLeft === 0 && aSlotsLeft > 0) return -1;
+      
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    setFilteredGroups(sorted);
+  }, [groups, searchTerm, selectedService, selectedStatus]);
 
   return (
     <section className="py-16 bg-muted/30">
@@ -154,7 +115,7 @@ const GroupsSection = () => {
           <div className="flex flex-wrap gap-2 mb-4">
             <Badge 
               variant="outline" 
-              className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+              className="cursor-pointer hover:bg-cyan-600 hover:text-white"
               onClick={() => setSelectedStatus("Acesso Imediato")}
             >
               <Filter className="h-3 w-3 mr-1" />
@@ -162,7 +123,7 @@ const GroupsSection = () => {
             </Badge>
             <Badge 
               variant="outline"
-              className="cursor-pointer hover:bg-primary hover:text-primary-foreground" 
+              className="cursor-pointer hover:bg-cyan-600 hover:text-white" 
               onClick={() => setSelectedStatus("Disponível")}
             >
               Últimas Vagas
@@ -170,7 +131,7 @@ const GroupsSection = () => {
           </div>
 
           {/* Create group CTA */}
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 mb-6">
+          <div className="bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold mb-1">Não encontrou o que procura?</h3>
@@ -178,7 +139,11 @@ const GroupsSection = () => {
                   Crie seu próprio grupo e convide outras pessoas para dividir os custos
                 </p>
               </div>
-              <Button variant="outline" className="shrink-0">
+              <Button 
+                variant="outline" 
+                className="shrink-0"
+                onClick={() => navigate('/create-group')}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Grupo
               </Button>
@@ -186,14 +151,55 @@ const GroupsSection = () => {
           </div>
         </div>
 
-        {/* Groups Grid */}
-        {sortedGroups.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedGroups.map(group => (
-              <GroupCard key={group.id} {...group} />
-            ))}
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Carregando grupos...</p>
           </div>
-        ) : (
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="text-center py-12">
+            <p className="text-destructive mb-4">{error}</p>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Tentar Novamente
+            </Button>
+          </div>
+        )}
+
+        {/* Groups Grid */}
+        {!loading && !error && filteredGroups.length > 0 ? (
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredGroups.slice(0, 6).map(group => (
+                <GroupCard 
+                  key={group.id}
+                  id={group.id}
+                  serviceName={group.services?.name || 'Serviço'}
+                  groupName={group.name}
+                  description={group.description}
+                  pricePerSlot={group.price_per_slot_cents}
+                  currentMembers={group.current_members}
+                  maxMembers={group.max_members}
+                  status={group.status}
+                  instantAccess={group.status === "active_with_slots"}
+                  relationshipType={group.relationship_type}
+                />
+              ))}
+            </div>
+            
+            {/* Mostrar total de grupos quando há mais de 6 */}
+            {filteredGroups.length > 6 && (
+              <div className="text-center mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Mostrando 6 de {filteredGroups.length} grupos
+                </p>
+              </div>
+            )}
+          </>
+        ) : !loading && !error ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               Nenhum grupo encontrado com os filtros selecionados.
@@ -206,13 +212,16 @@ const GroupsSection = () => {
               Limpar Filtros
             </Button>
           </div>
-        )}
+        ) : null}
 
         {/* Load more */}
-        {sortedGroups.length > 0 && (
+        {!loading && !error && filteredGroups.length > 6 && (
           <div className="text-center mt-8">
-            <Button variant="outline">
-              Carregar mais grupos
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/groups')}
+            >
+              Ver todos os grupos
             </Button>
           </div>
         )}

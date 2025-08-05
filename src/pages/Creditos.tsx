@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Minus, Eye, Wallet } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Eye, Wallet, TrendingUp, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, getUserTransactions } from '@/integrations/supabase/functions';
 import { useToast } from '@/hooks/use-toast';
@@ -87,13 +87,13 @@ const Creditos = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600';
+        return 'text-cyan-600 bg-cyan-50';
       case 'pending':
-        return 'text-yellow-600';
+        return 'text-yellow-600 bg-yellow-50';
       case 'failed':
-        return 'text-red-600';
+        return 'text-red-600 bg-red-50';
       default:
-        return 'text-gray-600';
+        return 'text-gray-600 bg-gray-50';
     }
   };
 
@@ -110,21 +110,21 @@ const Creditos = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center mb-6">
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <div className="flex items-center mb-8">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/dashboard')}
-                className="mr-4"
+                className="mr-3 text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-2xl font-bold">Carregando...</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Carregando...</h1>
             </div>
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
             </div>
           </div>
         </div>
@@ -136,121 +136,141 @@ const Creditos = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-4xl mx-auto">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="mr-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl font-bold">Meus Créditos</h1>
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="flex items-center mb-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="mr-3 text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-xl font-semibold text-gray-900">Meus Créditos</h1>
+          </div>
 
-        {/* Card de Saldo */}
-        <Card className="mb-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5" />
-              Saldo Disponível
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-4">
-              {formatCurrency(saldo)}
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={() => navigate('/creditos/adicionar')}
-                className="bg-white text-purple-600 hover:bg-gray-100"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar
-              </Button>
-              <Button
-                onClick={() => navigate('/creditos/sacar')}
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-purple-600"
-                disabled={saldo < 1000} // Mínimo R$ 10,00
-              >
-                <Minus className="h-4 w-4 mr-2" />
-                Sacar
-              </Button>
-            </div>
-            {saldo < 1000 && (
-              <p className="text-purple-100 text-sm mt-2">
-                Saldo mínimo para saque: R$ 10,00
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Histórico de Transações */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Histórico de Transações</CardTitle>
-            <CardDescription>
-              Suas últimas movimentações financeiras
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {transacoes.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Wallet className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>Nenhuma transação encontrada</p>
-                <p className="text-sm">Suas movimentações aparecerão aqui</p>
+          {/* Balance Card */}
+          <Card className="mb-8 border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Saldo Disponível</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatCurrency(saldo)}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-cyan-50 rounded-full flex items-center justify-center">
+                  <Wallet className="h-6 w-6 text-cyan-600" />
+                </div>
               </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => navigate('/creditos/adicionar')}
+                  className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Créditos
+                </Button>
+                <Button
+                  onClick={() => navigate('/creditos/sacar')}
+                  variant="outline"
+                  className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
+                  disabled={saldo < 1000}
+                >
+                  <Minus className="h-4 w-4 mr-2" />
+                  Sacar
+                </Button>
+              </div>
+              
+              {saldo < 1000 && (
+                <p className="text-xs text-gray-500 mt-3 text-center">
+                  Saldo mínimo para saque: R$ 10,00
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Transactions Section */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Histórico de Transações</h2>
+                <p className="text-sm text-gray-600 mt-1">Suas últimas movimentações financeiras</p>
+              </div>
+              <div className="flex items-center text-sm text-gray-500">
+                <Clock className="h-4 w-4 mr-1" />
+                {transacoes.length} transações
+              </div>
+            </div>
+
+            {transacoes.length === 0 ? (
+              <Card className="border-0 shadow-sm bg-white">
+                <CardContent className="p-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Wallet className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma transação</h3>
+                  <p className="text-gray-500">Suas movimentações aparecerão aqui quando você fizer transações.</p>
+                </CardContent>
+              </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {transacoes.map((transacao) => (
-                  <div
+                  <Card 
                     key={transacao.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="border-0 shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => navigate(`/creditos/transacao/${transacao.id}`, { 
                       state: { transaction: transacao } 
                     })}
                   >
-                    <div className="flex-1">
-                      <h3 className="font-medium">
-                        {getTransactionTypeLabel(transacao.type)}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {transacao.description}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(transacao.created_at)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className={`font-semibold ${
-                        transacao.amount_cents > 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transacao.amount_cents > 0 ? '+' : ''}{formatCurrency(transacao.amount_cents)}
-                      </p>
-                      {transacao.fee_cents > 0 && (
-                        <p className="text-xs text-gray-500">
-                          Taxa: {formatCurrency(transacao.fee_cents)}
-                        </p>
-                      )}
-                      <p className={`text-xs ${getStatusColor(transacao.status)}`}>
-                        {getStatusLabel(transacao.status)}
-                      </p>
-                    </div>
-                    <Eye className="h-4 w-4 ml-4 text-gray-400" />
-                  </div>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-medium text-gray-900">
+                              {getTransactionTypeLabel(transacao.type)}
+                            </h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transacao.status)}`}>
+                              {getStatusLabel(transacao.status)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">
+                            {transacao.description}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatDate(transacao.created_at)}
+                          </p>
+                        </div>
+                        
+                        <div className="text-right ml-4">
+                          <p className={`text-lg font-semibold ${
+                            transacao.amount_cents > 0 ? 'text-cyan-600' : 'text-red-600'
+                          }`}>
+                            {transacao.amount_cents > 0 ? '+' : ''}{formatCurrency(transacao.amount_cents)}
+                          </p>
+                          {transacao.fee_cents > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Taxa: {formatCurrency(transacao.fee_cents)}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <Eye className="h-4 w-4 ml-3 text-gray-400" />
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
-    </div>
-    <Footer />
-  </>
-);
+      <Footer />
+    </>
+  );
 };
 
 export default Creditos;

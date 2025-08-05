@@ -130,205 +130,205 @@ const AdicionarCreditos = () => {
     }
   };
 
-  if (paymentSuccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center mb-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/creditos')}
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-2xl font-bold">Pagamento Realizado</h1>
-          </div>
-
-          <Card className="text-center p-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="h-8 w-8 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-green-600 mb-2">
-              Créditos Adicionados!
-            </h2>
-            <p className="text-gray-600 mb-4">
-              {formatCurrency(parseInt(valor))} foram adicionados à sua conta
-            </p>
-            <p className="text-sm text-gray-500 mb-6">
-              Redirecionando em alguns segundos...
-            </p>
-            <Button onClick={() => navigate('/creditos')}>
-              Ver Meus Créditos
-            </Button>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-        <div className="max-w-2xl mx-auto">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/creditos')}
-            className="mr-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl font-bold">Adicionar Créditos</h1>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Escolha o valor</CardTitle>
-            <CardDescription>
-              Adicione créditos à sua conta para participar de grupos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Valores Predefinidos */}
-            <div>
-              <Label className="text-base font-medium">Valores sugeridos</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                {valorPredefinido.map((valor) => (
-                  <Button
-                    key={valor}
-                    variant="outline"
-                    onClick={() => handleValorPredefinido(valor)}
-                    className="text-center"
-                  >
-                    {formatCurrency(valor)}
-                  </Button>
-                ))}
+      
+      <main className="flex-1 bg-gradient-to-br from-purple-50 to-blue-50">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          {paymentSuccess ? (
+            <div className="text-center">
+              <div className="flex items-center mb-6">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/creditos')}
+                  className="mr-4"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-2xl font-bold">Pagamento Realizado</h1>
               </div>
-            </div>
 
-            {/* Valor Personalizado */}
-            <div>
-              <Label htmlFor="valor">Ou digite um valor personalizado</Label>
-              <Input
-                id="valor"
-                placeholder="Ex: 15,00"
-                value={valor ? formatCurrency(parseInt(valor)) : ''}
-                onChange={handleValorChange}
-                className="mt-1"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Valor mínimo: R$ 5,00
-              </p>
+              <Card className="text-center p-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="h-8 w-8 text-green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-green-600 mb-2">
+                  Créditos Adicionados!
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  {formatCurrency(parseInt(valor))} foram adicionados à sua conta
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  Redirecionando em alguns segundos...
+                </p>
+                <Button onClick={() => navigate('/creditos')}>
+                  Ver Meus Créditos
+                </Button>
+              </Card>
             </div>
+          ) : (
+            <>
+              <div className="flex items-center mb-6">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/creditos')}
+                  className="mr-4"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-2xl font-bold">Adicionar Créditos</h1>
+              </div>
 
-            {/* Resumo */}
-            {valor && parseInt(valor) >= 500 && (
-              <Card className="bg-gray-50">
-                <CardContent className="pt-6">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Valor a adicionar:</span>
-                      <span className="font-medium">{formatCurrency(parseInt(valor))}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Taxa de processamento:</span>
-                      <span className="font-medium">{formatCurrency(calcularTaxa(parseInt(valor)))}</span>
-                    </div>
-                    <div className="border-t pt-2">
-                      <div className="flex justify-between font-bold">
-                        <span>Total a pagar:</span>
-                        <span>{formatCurrency(parseInt(valor) + calcularTaxa(parseInt(valor)))}</span>
-                      </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Escolha o valor</CardTitle>
+                  <CardDescription>
+                    Adicione créditos à sua conta para participar de grupos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Valores Predefinidos */}
+                  <div>
+                    <Label className="text-base font-medium">Valores sugeridos</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                      {valorPredefinido.map((valor) => (
+                        <Button
+                          key={valor}
+                          variant="outline"
+                          onClick={() => handleValorPredefinido(valor)}
+                          className="text-center"
+                        >
+                          {formatCurrency(valor)}
+                        </Button>
+                      ))}
                     </div>
                   </div>
+
+                  {/* Valor Personalizado */}
+                  <div>
+                    <Label htmlFor="valor">Ou digite um valor personalizado</Label>
+                    <Input
+                      id="valor"
+                      placeholder="Ex: 15,00"
+                      value={valor ? formatCurrency(parseInt(valor)) : ''}
+                      onChange={handleValorChange}
+                      className="mt-1"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Valor mínimo: R$ 5,00
+                    </p>
+                  </div>
+
+                  {/* Resumo */}
+                  {valor && parseInt(valor) >= 500 && (
+                    <Card className="bg-gray-50">
+                      <CardContent className="pt-6">
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Valor a adicionar:</span>
+                            <span className="font-medium">{formatCurrency(parseInt(valor))}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Taxa de processamento:</span>
+                            <span className="font-medium">{formatCurrency(calcularTaxa(parseInt(valor)))}</span>
+                          </div>
+                          <div className="border-t pt-2">
+                            <div className="flex justify-between font-bold">
+                              <span>Total a pagar:</span>
+                              <span>{formatCurrency(parseInt(valor) + calcularTaxa(parseInt(valor)))}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Método de Pagamento */}
+                  <div>
+                    <Label className="text-base font-medium">Método de pagamento</Label>
+                    <RadioGroup
+                      value={metodoPagamento}
+                      onValueChange={setMetodoPagamento}
+                      className="mt-2"
+                    >
+                      <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                        <RadioGroupItem value="pix" id="pix" />
+                        <Label htmlFor="pix" className="flex items-center cursor-pointer flex-1">
+                          <Smartphone className="h-5 w-5 mr-2 text-green-600" />
+                          <div>
+                            <div className="font-medium">PIX</div>
+                            <div className="text-sm text-gray-500">
+                              Aprovação instantânea
+                            </div>
+                          </div>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                        <RadioGroupItem value="credit_card" id="credit_card" />
+                        <Label htmlFor="credit_card" className="flex items-center cursor-pointer flex-1">
+                          <CreditCard className="h-5 w-5 mr-2 text-cyan-600" />
+                          <div>
+                            <div className="font-medium">Cartão de Crédito</div>
+                            <div className="text-sm text-gray-500">
+                              Aprovação em até 1 hora
+                            </div>
+                          </div>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                        <RadioGroupItem value="debit_card" id="debit_card" />
+                        <Label htmlFor="debit_card" className="flex items-center cursor-pointer flex-1">
+                          <CreditCard className="h-5 w-5 mr-2 text-purple-600" />
+                          <div>
+                            <div className="font-medium">Cartão de Débito</div>
+                            <div className="text-sm text-gray-500">
+                              Aprovação instantânea
+                            </div>
+                          </div>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <Button
+                    onClick={handleProcessarPagamento}
+                    disabled={!valor || parseInt(valor) < 500 || loading}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Processando...
+                      </>
+                    ) : (
+                      `Pagar ${valor ? formatCurrency(parseInt(valor) + calcularTaxa(parseInt(valor))) : ''}`
+                    )}
+                  </Button>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    Ao continuar, você concorda com nossos{' '}
+                    <a href="/termos" className="text-purple-600 hover:underline">
+                      Termos de Uso
+                    </a>{' '}
+                    e{' '}
+                    <a href="/privacidade" className="text-purple-600 hover:underline">
+                      Política de Privacidade
+                    </a>
+                  </p>
                 </CardContent>
               </Card>
-            )}
-
-            {/* Método de Pagamento */}
-            <div>
-              <Label className="text-base font-medium">Método de pagamento</Label>
-              <RadioGroup
-                value={metodoPagamento}
-                onValueChange={setMetodoPagamento}
-                className="mt-2"
-              >
-                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                  <RadioGroupItem value="pix" id="pix" />
-                  <Label htmlFor="pix" className="flex items-center cursor-pointer flex-1">
-                    <Smartphone className="h-5 w-5 mr-2 text-green-600" />
-                    <div>
-                      <div className="font-medium">PIX</div>
-                      <div className="text-sm text-gray-500">
-                        Aprovação instantânea
-                      </div>
-                    </div>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                  <RadioGroupItem value="credit_card" id="credit_card" />
-                  <Label htmlFor="credit_card" className="flex items-center cursor-pointer flex-1">
-                    <CreditCard className="h-5 w-5 mr-2 text-blue-600" />
-                    <div>
-                      <div className="font-medium">Cartão de Crédito</div>
-                      <div className="text-sm text-gray-500">
-                        Aprovação em até 1 hora
-                      </div>
-                    </div>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                  <RadioGroupItem value="debit_card" id="debit_card" />
-                  <Label htmlFor="debit_card" className="flex items-center cursor-pointer flex-1">
-                    <CreditCard className="h-5 w-5 mr-2 text-purple-600" />
-                    <div>
-                      <div className="font-medium">Cartão de Débito</div>
-                      <div className="text-sm text-gray-500">
-                        Aprovação instantânea
-                      </div>
-                    </div>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <Button
-              onClick={handleProcessarPagamento}
-              disabled={!valor || parseInt(valor) < 500 || loading}
-              className="w-full"
-              size="lg"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processando...
-                </>
-              ) : (
-                `Pagar ${valor ? formatCurrency(parseInt(valor) + calcularTaxa(parseInt(valor))) : ''}`
-              )}
-            </Button>
-
-            <p className="text-xs text-gray-500 text-center">
-              Ao continuar, você concorda com nossos{' '}
-              <a href="/termos" className="text-purple-600 hover:underline">
-                Termos de Uso
-              </a>{' '}
-              e{' '}
-              <a href="/privacidade" className="text-purple-600 hover:underline">
-                Política de Privacidade
-              </a>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            </>
+          )}
+        </div>
+      </main>
+      
+      <Footer />
     </div>
-    <Footer />
-  </>
-);
+  );
 };
 
 export default AdicionarCreditos;

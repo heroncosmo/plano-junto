@@ -15,8 +15,8 @@ const Hero = () => {
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                 Divida assinaturas e{" "}
-                <span className="text-primary">economize até 80%</span> em{" "}
-                <span className="text-primary">Streamings</span>
+                            <span className="text-cyan-600">economize até 80%</span> em{" "}
+            <span className="text-cyan-600">Streamings</span>
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-xl">
@@ -37,15 +37,15 @@ const Hero = () => {
             {/* Trust indicators */}
             <div className="flex items-center space-x-8 pt-8">
               <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-primary" />
+                <Users className="h-5 w-5 text-cyan-600" />
                 <span className="text-sm text-muted-foreground">+50k usuários</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-primary" />
+                <Shield className="h-5 w-5 text-cyan-600" />
                 <span className="text-sm text-muted-foreground">100% seguro</span>
               </div>
               <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-primary" />
+                <DollarSign className="h-5 w-5 text-cyan-600" />
                 <span className="text-sm text-muted-foreground">Economize até 80%</span>
               </div>
             </div>

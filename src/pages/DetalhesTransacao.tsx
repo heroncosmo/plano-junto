@@ -7,11 +7,13 @@ import { ChevronLeft, Calendar, DollarSign, User, Users, CheckCircle, Clock, XCi
 
 interface Transaction {
   id: string;
-  type: 'credit' | 'debit';
-  amount: number;
+  type: string;
+  amount_cents: number;
+  fee_cents: number;
   description: string;
-  date: string;
-  status: 'completed' | 'pending' | 'failed';
+  created_at: string;
+  status: string;
+  payment_method: string;
   groupName?: string;
   participantName?: string;
   groupId?: string;
@@ -25,11 +27,14 @@ const DetalhesTransacao = () => {
   const { transaction } = location.state || {};
 
   const formatPrice = (priceCents: number) => {
+    if (!priceCents || isNaN(priceCents)) return 'R$ 0,00';
     return `R$ ${(priceCents / 100).toFixed(2).replace('.', ',')}`;
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Data não disponível';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Data inválida';
     return date.toLocaleDateString('pt-BR', {
       year: 'numeric',
       month: 'long',
@@ -37,6 +42,17 @@ const DetalhesTransacao = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getTransactionTypeLabel = (type: string) => {
+    const types: { [key: string]: string } = {
+      'credit_purchase': 'Adição de Créditos',
+      'group_payment': 'Pagamento de Grupo',
+      'withdrawal': 'Saque',
+      'admin_fee': 'Taxa Administrativa',
+      'balance_adjustment': 'Ajuste de Saldo'
+    };
+    return types[type] || type;
   };
 
   const getStatusIcon = (status: string) => {
@@ -144,15 +160,24 @@ const DetalhesTransacao = () => {
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Valor:</span>
                 <span className={`font-bold text-lg ${
-                  transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                  transaction.amount_cents > 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {transaction.type === 'credit' ? '+' : '-'} {formatPrice(transaction.amount)}
+                  {transaction.amount_cents > 0 ? '+' : '-'} {formatPrice(Math.abs(transaction.amount_cents))}
                 </span>
               </div>
 
+              {transaction.fee_cents > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Taxa:</span>
+                  <span className="font-medium text-red-600">
+                    {formatPrice(transaction.fee_cents)}
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Data:</span>
-                <span className="font-medium">{formatDate(transaction.date)}</span>
+                <span className="font-medium">{formatDate(transaction.created_at)}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -162,6 +187,15 @@ const DetalhesTransacao = () => {
                   <span className="font-medium">{getStatusText(transaction.status)}</span>
                 </div>
               </div>
+
+              {transaction.payment_method && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Método de Pagamento:</span>
+                  <span className="font-medium capitalize">
+                    {transaction.payment_method.replace('_', ' ')}
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -228,17 +262,17 @@ const DetalhesTransacao = () => {
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Tipo de Transação:</span>
                 <span className={`font-medium px-3 py-1 rounded-full ${
-                  transaction.type === 'credit' 
+                  transaction.amount_cents > 0 
                     ? 'bg-green-100 text-green-700' 
                     : 'bg-red-100 text-red-700'
                 }`}>
-                  {transaction.type === 'credit' ? 'Crédito' : 'Débito'}
+                  {getTransactionTypeLabel(transaction.type)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Processado em:</span>
-                <span className="font-medium">{formatDate(transaction.date)}</span>
+                <span className="font-medium">{formatDate(transaction.created_at)}</span>
               </div>
 
               {transaction.status === 'pending' && (

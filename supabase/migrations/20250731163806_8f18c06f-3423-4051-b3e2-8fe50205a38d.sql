@@ -51,6 +51,7 @@ CREATE TABLE public.groups (
   status group_status DEFAULT 'waiting_subscription',
   instant_access BOOLEAN DEFAULT false,
   admin_approved BOOLEAN DEFAULT false, -- For custom services
+  owner_approved BOOLEAN DEFAULT false, -- Owner must approve after admin approval
   access_credentials TEXT, -- Encrypted access data
   access_sent_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

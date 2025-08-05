@@ -150,7 +150,7 @@ const CreateGroupFidelity = () => {
         <Card className="mb-4 bg-cyan-50 border-cyan-200">
           <CardContent className="p-3">
             <div className="flex items-start gap-2 mb-2">
-              <div className="w-4 h-4 bg-cyan-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <div className="w-4 h-4 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Info className="h-2.5 w-2.5 text-white" />
               </div>
               <div>

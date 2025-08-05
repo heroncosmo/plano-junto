@@ -42,9 +42,9 @@ const LoyaltyGroup = () => {
             
             {/* Ícone centralizado */}
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-cyan-500 rounded-full flex items-center justify-center">
                 <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-blue-500" />
+                  <FileText className="h-6 w-6 text-cyan-500" />
                 </div>
               </div>
             </div>
@@ -57,31 +57,31 @@ const LoyaltyGroup = () => {
             {/* Parágrafo explicativo */}
             <p className="text-gray-700 leading-relaxed mb-6 text-sm">
               Grupos com Fidelidade oferecem uma experiência exclusiva e vantajosa para os participantes do Kotas. Nessa modalidade, os administradores assumem o compromisso de manter o grupo ativo, enquanto os membros concordam em permanecer no grupo por um período determinado. Para entender todos os detalhes sobre grupos com fidelidade,{' '}
-              <a href="#" className="text-blue-600 underline font-medium">clique aqui</a>.
+              <a href="#" className="text-cyan-600 underline font-medium">clique aqui</a>.
             </p>
 
             {/* Seção de regras básicas */}
-            <div className="bg-blue-50 rounded-xl p-6 mb-6">
+            <div className="bg-cyan-50 rounded-xl p-6 mb-6">
               <div className="flex items-center gap-2 mb-4">
-                <Info className="h-5 w-5 text-blue-500" />
+                <Info className="h-5 w-5 text-cyan-500" />
                 <h2 className="font-semibold text-gray-900">Regras básicas</h2>
               </div>
               
               <ul className="space-y-3 text-gray-700 text-sm">
                 <li className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full mt-2 flex-shrink-0"></div>
                   <span>
                     Os participantes do grupo assumem um <strong>compromisso mútuo</strong> de manter o grupo pelo período determinado;
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full mt-2 flex-shrink-0"></div>
                   <span>
                     Durante o período estabelecido, sua inscrição <strong>não pode ser cancelada</strong> até o término da fidelidade, sujeito a pagamento de taxas e multas;
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full mt-2 flex-shrink-0"></div>
                   <span>
                     <strong>A renovação de fidelidade</strong> acontece automaticamente no final do período estabelecido. Ela acontece para todos os membros na mesma data de renovação do grupo.
                   </span>
@@ -99,7 +99,7 @@ const LoyaltyGroup = () => {
               />
               <label htmlFor="agreement" className="text-xs text-gray-700 leading-relaxed">
                 Confirmo que li e estou de acordo com as regras e os{' '}
-                <a href="#" className="text-blue-600 underline">Termos de Uso de Grupos com Fidelidade</a>. 
+                <a href="#" className="text-cyan-600 underline">Termos de Uso de Grupos com Fidelidade</a>. 
                 Aceito permanecer no grupo pelo período mínimo de <strong>3 meses</strong> e estou ciente de que podem ser aplicadas taxas e multas em caso de cancelamento antecipado.
               </label>
             </div>
@@ -117,7 +117,7 @@ const LoyaltyGroup = () => {
             
             <button 
               onClick={handleBack}
-              className="text-blue-600 hover:text-blue-700 text-xs font-medium"
+              className="text-cyan-600 hover:text-cyan-700 text-xs font-medium"
             >
               Voltar
             </button>

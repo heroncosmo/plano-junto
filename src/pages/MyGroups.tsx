@@ -85,7 +85,7 @@ const MyGroups = () => {
       case 'waiting_subscription':
         return 'bg-yellow-100 text-yellow-800';
       case 'queue':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-cyan-100 text-cyan-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }

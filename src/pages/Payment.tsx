@@ -143,7 +143,7 @@ const Payment = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -291,7 +291,7 @@ const Payment = () => {
                   <Button
                     variant="ghost"
                     onClick={() => setShowMoreMethods(!showMoreMethods)}
-                    className="text-blue-600 hover:text-blue-700 p-0 h-auto text-xs"
+                    className="text-cyan-600 hover:text-cyan-700 p-0 h-auto text-xs"
                   >
                     Ver mais formas de pagamento
                     <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${showMoreMethods ? 'rotate-180' : ''}`} />
@@ -311,7 +311,7 @@ const Payment = () => {
                   <Button
                     onClick={handlePayment}
                     disabled={processing}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg disabled:opacity-50"
+                    className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-3 rounded-lg disabled:opacity-50"
                   >
                     {processing ? (
                       <div className="flex items-center space-x-2">

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Users, Clock, Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface GroupCardProps {
   id: string;
@@ -54,6 +55,7 @@ const getStatusConfig = (status: string, instantAccess: boolean) => {
 };
 
 const GroupCard = ({
+  id,
   serviceName,
   groupName,
   description,
@@ -64,12 +66,20 @@ const GroupCard = ({
   instantAccess,
   relationshipType
 }: GroupCardProps) => {
+  const navigate = useNavigate();
   const statusConfig = getStatusConfig(status, instantAccess);
   const slotsLeft = maxMembers - currentMembers;
   const isAlmostFull = slotsLeft <= 2;
 
+  const handleCardClick = () => {
+    navigate(`/group/${id}`);
+  };
+
   return (
-    <Card className="hover:shadow-primary transition-all duration-300 hover:-translate-y-1">
+    <Card 
+      className="hover:shadow-primary transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+      onClick={handleCardClick}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -95,7 +105,7 @@ const GroupCard = ({
             <span className="font-medium">
               {currentMembers}/{maxMembers} 
               {isAlmostFull && (
-                <span className="text-primary ml-1">• Últimas vagas!</span>
+                <span className="text-cyan-600 ml-1">• Últimas vagas!</span>
               )}
             </span>
           </div>
@@ -109,7 +119,7 @@ const GroupCard = ({
         <div className="pt-2 border-t">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-primary">
+              <p className="text-2xl font-bold text-cyan-600">
                 R$ {(pricePerSlot / 100).toFixed(2)}
               </p>
               <p className="text-xs text-muted-foreground">por mês + taxa</p>
@@ -127,6 +137,10 @@ const GroupCard = ({
         <Button 
           className="w-full shadow-button" 
           variant={instantAccess ? "default" : "outline"}
+          onClick={(e) => {
+            e.stopPropagation(); // Evita que o clique do botão ative o clique do card
+            navigate(`/group/${id}`);
+          }}
         >
           {instantAccess ? "Entrar Agora" : "Entrar na Fila"}
         </Button>

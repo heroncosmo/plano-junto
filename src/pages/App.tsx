@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGroups } from '@/hooks/useGroups';
-import { ChevronRight, ChevronLeft, ShoppingCart, TrendingUp, Users, Star } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ShoppingCart, TrendingUp, Users, Star, DollarSign, Clock, ExternalLink } from 'lucide-react';
 
 const App = () => {
   const { groups, loading, error } = useGroups();
@@ -44,35 +44,51 @@ const App = () => {
     popular: dividedGroups.popular.length
   });
 
-  const getServiceInitial = (serviceName: string) => {
-    if (!serviceName || serviceName.length === 0) return 'S';
-    return serviceName.charAt(0).toUpperCase();
+  const formatCurrency = (centavos: number) => {
+    return `R$ ${(centavos / 100).toFixed(2).replace('.', ',')}`;
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'ai_tools': 'bg-emerald-500',
-      'streaming': 'bg-red-500',
-      'design': 'bg-purple-500',
-      'productivity': 'bg-blue-500',
-      'gaming': 'bg-green-500',
-      'education': 'bg-orange-500',
-      'ai': 'bg-emerald-500',
-      'music': 'bg-pink-500',
-      'other': 'bg-gray-500'
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const getCategoryLabel = (category: string) => {
+    const categories: { [key: string]: string } = {
+      'streaming': 'Streaming',
+      'music': 'Música',
+      'education': 'Educação',
+      'ai': 'IA',
+      'gaming': 'Jogos',
+      'productivity': 'Produtividade',
+      'other': 'Outros'
     };
-    return colors[category] || 'bg-gray-500';
+    return categories[category] || 'Outros';
   };
 
-  const formatPrice = (priceCents: number) => {
-    return `R$ ${(priceCents / 100).toFixed(2).replace('.', ',')}`;
+  const getRelationshipLabel = (type: string) => {
+    const types: { [key: string]: string } = {
+      'family': 'Família',
+      'friends': 'Amigos',
+      'work': 'Trabalho',
+      'other': 'Outros'
+    };
+    return types[type] || 'Outros';
   };
 
-  const getStatusText = (availableSpots: number, isAssinado: boolean = true) => {
-    if (isAssinado) {
-      return availableSpots > 0 ? 'Aguardando membros' : 'Grupo completo';
-    }
-    return availableSpots > 0 ? 'Aguardando membros' : 'Grupo completo';
+  const getAvailabilityColor = (status: string) => {
+    const colors: { [key: string]: string } = {
+      'available': 'bg-green-100 text-green-800',
+      'full': 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getAvailabilityLabel = (status: string) => {
+    const labels: { [key: string]: string } = {
+      'available': 'Disponível',
+      'full': 'Completo'
+    };
+    return labels[status] || 'Indisponível';
   };
 
   const scrollLeft = (ref: React.RefObject<HTMLDivElement>) => {
@@ -87,13 +103,44 @@ const App = () => {
     }
   };
 
+  // Função para detectar scroll e mostrar efeitos
+  const handleScroll = (ref: React.RefObject<HTMLDivElement>) => {
+    if (ref.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = ref.current;
+      const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
+      
+      if (isAtEnd) {
+        // Adicionar efeito de bounce quando chega ao final
+        ref.current.classList.add('bounce-end');
+        setTimeout(() => {
+          ref.current?.classList.remove('bounce-end');
+        }, 600);
+      }
+    }
+  };
+
+  // Adicionar event listeners para scroll
+  useEffect(() => {
+    const addScrollListeners = () => {
+      [scrollRef, scrollRef2, scrollRef3].forEach(ref => {
+        if (ref.current) {
+          ref.current.addEventListener('scroll', () => handleScroll(ref));
+        }
+      });
+    };
+
+    // Aguardar um pouco para os refs estarem prontos
+    const timer = setTimeout(addScrollListeners, 100);
+    return () => clearTimeout(timer);
+  }, [groups]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="max-w-5xl mx-auto px-6 py-8">
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Carregando grupos...</p>
           </div>
         </main>
@@ -123,26 +170,26 @@ const App = () => {
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-10">
         
         {/* Hero Banner - ECONOMIA EM ASSINATURAS */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white relative overflow-hidden flex items-center justify-between">
-          <div className="space-y-3 z-10">
-            <h1 className="text-3xl font-bold">
+        <div className="bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-2xl p-6 md:p-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-3 z-10 text-center md:text-left">
+            <h1 className="text-2xl md:text-3xl font-bold leading-tight">
               Quer economizar até
               <br />
-              <span className="text-yellow-400">80% em assinaturas?</span>
+              <span className="text-white font-extrabold">80% em assinaturas?</span>
             </h1>
-            <p className="text-lg opacity-90">
+            <p className="text-base md:text-lg opacity-95">
               Junte-se a milhares de pessoas economizando juntas!
             </p>
           </div>
           <div className="flex-shrink-0 z-10">
             <Link to="/groups">
-              <Button size="lg" className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold rounded-lg px-8 flex items-center gap-2">
-                <span className="text-black">🎁</span>
+              <Button size="lg" className="bg-white hover:bg-gray-100 text-cyan-600 font-bold rounded-lg px-6 md:px-8 py-3 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200">
+                <span className="text-cyan-600">🎁</span>
                 Começar a economizar
               </Button>
             </Link>
           </div>
-          <div className="absolute right-0 top-0 text-9xl text-green-400 opacity-20 z-0 transform -translate-y-1/4 translate-x-1/4">
+          <div className="absolute right-0 top-0 text-6xl md:text-9xl text-cyan-400 opacity-10 z-0 transform -translate-y-1/4 translate-x-1/4">
             🍀
           </div>
         </div>
@@ -154,7 +201,7 @@ const App = () => {
               <Star className="h-5 w-5 text-yellow-500" />
               Selecionados para você
             </h2>
-            <Link to="/groups" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+            <Link to="/groups" className="text-cyan-600 hover:text-cyan-700 text-sm font-medium flex items-center gap-1">
               Ver Tudo
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -162,18 +209,18 @@ const App = () => {
           
           {/* Container com scroll horizontal e botões de navegação */}
           <div className="relative group">
-            {/* Botão esquerdo */}
+            {/* Botão esquerdo - Desktop */}
             <button
               onClick={() => scrollLeft(scrollRef)}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hidden md:flex"
             >
               <ChevronLeft className="h-5 w-5 text-gray-600" />
             </button>
             
-            {/* Botão direito */}
+            {/* Botão direito - Desktop */}
             <button
               onClick={() => scrollRight(scrollRef)}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hidden md:flex"
             >
               <ChevronRight className="h-5 w-5 text-gray-600" />
             </button>
@@ -181,42 +228,96 @@ const App = () => {
             {/* Scroll horizontal */}
             <div 
               ref={scrollRef}
-              className="overflow-x-auto pb-4 scrollbar-hide"
+              className="mobile-scroll-container"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               <div className="flex gap-4 min-w-max px-4">
-                {dividedGroups.selected.map((group) => {
-                  const availableSpots = group.max_members - group.current_members;
-                  
-                  return (
-                    <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[200px]">
-                      <Link to={`/group/${group.id}`}>
-                        <CardContent className="p-6 text-center space-y-3">
-                          {/* Avatar com inicial */}
-                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.services?.category || 'unknown')} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
-                            {getServiceInitial(group.services?.name || 'S')}
+                {dividedGroups.selected.map((group) => (
+                  <Card key={group.id} className="hover:shadow-lg transition-shadow min-w-[280px] max-w-[320px]">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          {group.services?.icon_url && (
+                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <img 
+                                src={group.services.icon_url} 
+                                alt={group.services.name}
+                                className="w-8 h-8"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <CardTitle className="text-lg">{group.name}</CardTitle>
+                            <CardDescription>{group.services?.name || 'Serviço não disponível'}</CardDescription>
                           </div>
-                          {/* Nome do serviço */}
-                          <h3 className="font-semibold text-gray-900 text-sm">
-                            {group.services?.name || 'Serviço não disponível'}
-                          </h3>
-                          {/* Número de vagas */}
-                          <p className="text-sm text-gray-600 font-medium">
-                            {group.max_members} Vagas
+                        </div>
+                        <Badge className={getAvailabilityColor(group.current_members >= group.max_members ? 'full' : 'available')}>
+                          {getAvailabilityLabel(group.current_members >= group.max_members ? 'full' : 'available')}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Vagas:</span>
+                          <span className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            {group.current_members}/{group.max_members}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Preço por vaga:</span>
+                          <span className="flex items-center gap-1 font-medium text-green-600">
+                            <DollarSign className="h-4 w-4" />
+                            {formatCurrency(group.price_per_slot_cents)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Criado em:</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {formatDate(group.created_at)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">
+                            {getCategoryLabel(group.services?.category || 'unknown')}
+                          </Badge>
+                          <Badge variant="outline">
+                            {getRelationshipLabel(group.relationship_type)}
+                          </Badge>
+                        </div>
+                        
+                        {group.description && (
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {group.description}
                           </p>
-                          {/* Preço */}
-                          <p className="text-xl font-bold text-gray-900">
-                            {formatPrice(group.price_per_slot_cents)}
-                          </p>
-                          {/* Status com design de selo */}
-                          <div className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-xs text-gray-600 font-medium">
-                            {getStatusText(availableSpots)}
+                        )}
+                        
+                        <Button
+                          onClick={() => window.location.href = `/group/${group.id}`}
+                          className="w-full"
+                          disabled={group.current_members >= group.max_members}
+                        >
+                          {group.current_members >= group.max_members ? (
+                            'Grupo Completo'
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Ver Detalhes
+                            </>
+                          )}
+                        </Button>
                           </div>
                         </CardContent>
-                      </Link>
                     </Card>
-                  );
-                })}
+                ))}
               </div>
             </div>
           </div>
@@ -226,10 +327,10 @@ const App = () => {
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-500" />
+              <TrendingUp className="h-5 w-5 text-cyan-500" />
               Descobrir
             </h2>
-            <Link to="/groups" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+            <Link to="/groups" className="text-cyan-600 hover:text-cyan-700 text-sm font-medium flex items-center gap-1">
               Ver Tudo
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -237,18 +338,18 @@ const App = () => {
           
           {/* Container com scroll horizontal e botões de navegação */}
           <div className="relative group">
-            {/* Botão esquerdo */}
+            {/* Botão esquerdo - Desktop */}
             <button
               onClick={() => scrollLeft(scrollRef2)}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hidden md:flex"
             >
               <ChevronLeft className="h-5 w-5 text-gray-600" />
             </button>
             
-            {/* Botão direito */}
+            {/* Botão direito - Desktop */}
             <button
               onClick={() => scrollRight(scrollRef2)}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hidden md:flex"
             >
               <ChevronRight className="h-5 w-5 text-gray-600" />
             </button>
@@ -256,42 +357,96 @@ const App = () => {
             {/* Scroll horizontal */}
             <div 
               ref={scrollRef2}
-              className="overflow-x-auto pb-4 scrollbar-hide"
+              className="mobile-scroll-container"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               <div className="flex gap-4 min-w-max px-4">
-                {dividedGroups.discovery.map((group) => {
-                  const availableSpots = group.max_members - group.current_members;
-                  
-                  return (
-                    <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[200px]">
-                      <Link to={`/group/${group.id}`}>
-                        <CardContent className="p-6 text-center space-y-3">
-                          {/* Avatar com inicial */}
-                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.services?.category || 'unknown')} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
-                            {getServiceInitial(group.services?.name || 'S')}
+                {dividedGroups.discovery.map((group) => (
+                  <Card key={group.id} className="hover:shadow-lg transition-shadow min-w-[280px] max-w-[320px]">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          {group.services?.icon_url && (
+                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <img 
+                                src={group.services.icon_url} 
+                                alt={group.services.name}
+                                className="w-8 h-8"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <CardTitle className="text-lg">{group.name}</CardTitle>
+                            <CardDescription>{group.services?.name || 'Serviço não disponível'}</CardDescription>
                           </div>
-                          {/* Nome do serviço */}
-                          <h3 className="font-semibold text-gray-900 text-sm">
-                            {group.services?.name || 'Serviço não disponível'}
-                          </h3>
-                          {/* Número de vagas */}
-                          <p className="text-sm text-gray-600 font-medium">
-                            {group.max_members} Vagas
+                        </div>
+                        <Badge className={getAvailabilityColor(group.current_members >= group.max_members ? 'full' : 'available')}>
+                          {getAvailabilityLabel(group.current_members >= group.max_members ? 'full' : 'available')}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Vagas:</span>
+                          <span className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            {group.current_members}/{group.max_members}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Preço por vaga:</span>
+                          <span className="flex items-center gap-1 font-medium text-green-600">
+                            <DollarSign className="h-4 w-4" />
+                            {formatCurrency(group.price_per_slot_cents)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Criado em:</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {formatDate(group.created_at)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">
+                            {getCategoryLabel(group.services?.category || 'unknown')}
+                          </Badge>
+                          <Badge variant="outline">
+                            {getRelationshipLabel(group.relationship_type)}
+                          </Badge>
+                        </div>
+                        
+                        {group.description && (
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {group.description}
                           </p>
-                          {/* Preço */}
-                          <p className="text-xl font-bold text-gray-900">
-                            {formatPrice(group.price_per_slot_cents)}
-                          </p>
-                          {/* Status com design de selo */}
-                          <div className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-xs text-gray-600 font-medium">
-                            {getStatusText(availableSpots)}
+                        )}
+                        
+                        <Button
+                          onClick={() => window.location.href = `/group/${group.id}`}
+                          className="w-full"
+                          disabled={group.current_members >= group.max_members}
+                        >
+                          {group.current_members >= group.max_members ? (
+                            'Grupo Completo'
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Ver Detalhes
+                            </>
+                          )}
+                        </Button>
                           </div>
                         </CardContent>
-                      </Link>
                     </Card>
-                  );
-                })}
+                ))}
               </div>
             </div>
           </div>
@@ -304,7 +459,7 @@ const App = () => {
               <Users className="h-5 w-5 text-green-500" />
               Descubra o que estão compartilhando
             </h2>
-            <Link to="/groups" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+            <Link to="/groups" className="text-cyan-600 hover:text-cyan-700 text-sm font-medium flex items-center gap-1">
               Ver Tudo
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -312,18 +467,18 @@ const App = () => {
           
           {/* Container com scroll horizontal e botões de navegação */}
           <div className="relative group">
-            {/* Botão esquerdo */}
+            {/* Botão esquerdo - Desktop */}
             <button
               onClick={() => scrollLeft(scrollRef3)}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hidden md:flex"
             >
               <ChevronLeft className="h-5 w-5 text-gray-600" />
             </button>
             
-            {/* Botão direito */}
+            {/* Botão direito - Desktop */}
             <button
               onClick={() => scrollRight(scrollRef3)}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 nav-button opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hidden md:flex"
             >
               <ChevronRight className="h-5 w-5 text-gray-600" />
             </button>
@@ -331,42 +486,96 @@ const App = () => {
             {/* Scroll horizontal */}
             <div 
               ref={scrollRef3}
-              className="overflow-x-auto pb-4 scrollbar-hide"
+              className="mobile-scroll-container"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               <div className="flex gap-4 min-w-max px-4">
-                {dividedGroups.trending.map((group) => {
-                  const availableSpots = group.max_members - group.current_members;
-                  
-                  return (
-                    <Card key={group.id} className="bg-white rounded-xl border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[200px]">
-                      <Link to={`/group/${group.id}`}>
-                        <CardContent className="p-6 text-center space-y-3">
-                          {/* Avatar com inicial */}
-                          <div className={`w-16 h-16 mx-auto ${getCategoryColor(group.services?.category || 'unknown')} rounded-full flex items-center justify-center text-white text-xl font-bold`}>
-                            {getServiceInitial(group.services?.name || 'S')}
+                {dividedGroups.trending.map((group) => (
+                  <Card key={group.id} className="hover:shadow-lg transition-shadow min-w-[280px] max-w-[320px]">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          {group.services?.icon_url && (
+                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <img 
+                                src={group.services.icon_url} 
+                                alt={group.services.name}
+                                className="w-8 h-8"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <CardTitle className="text-lg">{group.name}</CardTitle>
+                            <CardDescription>{group.services?.name || 'Serviço não disponível'}</CardDescription>
                           </div>
-                          {/* Nome do serviço */}
-                          <h3 className="font-semibold text-gray-900 text-sm">
-                            {group.services?.name || 'Serviço não disponível'}
-                          </h3>
-                          {/* Número de vagas */}
-                          <p className="text-sm text-gray-600 font-medium">
-                            {group.max_members} Vagas
+                        </div>
+                        <Badge className={getAvailabilityColor(group.current_members >= group.max_members ? 'full' : 'available')}>
+                          {getAvailabilityLabel(group.current_members >= group.max_members ? 'full' : 'available')}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Vagas:</span>
+                          <span className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            {group.current_members}/{group.max_members}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Preço por vaga:</span>
+                          <span className="flex items-center gap-1 font-medium text-green-600">
+                            <DollarSign className="h-4 w-4" />
+                            {formatCurrency(group.price_per_slot_cents)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Criado em:</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {formatDate(group.created_at)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">
+                            {getCategoryLabel(group.services?.category || 'unknown')}
+                          </Badge>
+                          <Badge variant="outline">
+                            {getRelationshipLabel(group.relationship_type)}
+                          </Badge>
+                        </div>
+                        
+                        {group.description && (
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {group.description}
                           </p>
-                          {/* Preço */}
-                          <p className="text-xl font-bold text-gray-900">
-                            {formatPrice(group.price_per_slot_cents)}
-                          </p>
-                          {/* Status com design de selo */}
-                          <div className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-xs text-gray-600 font-medium">
-                            {getStatusText(availableSpots)}
+                        )}
+                        
+                        <Button
+                          onClick={() => window.location.href = `/group/${group.id}`}
+                          className="w-full"
+                          disabled={group.current_members >= group.max_members}
+                        >
+                          {group.current_members >= group.max_members ? (
+                            'Grupo Completo'
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Ver Detalhes
+                            </>
+                          )}
+                        </Button>
                           </div>
                         </CardContent>
-                      </Link>
                     </Card>
-                  );
-                })}
+                ))}
               </div>
             </div>
           </div>

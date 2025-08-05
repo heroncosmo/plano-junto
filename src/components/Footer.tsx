@@ -8,8 +8,8 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">J</span>
+              <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">J</span>
               </div>
               <span className="text-xl font-bold">JuntaPlay</span>
             </div>
@@ -102,7 +102,7 @@ const Footer = () => {
         <div className="border-t mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-muted-foreground">
-              © 2024 JuntaPlay. Todos os direitos reservados.
+              © 2025 JuntaPlay. Todos os direitos reservados.
             </p>
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <span>🔒 SSL Seguro</span>

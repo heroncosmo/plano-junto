@@ -70,7 +70,7 @@ const JoinGroup = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -95,7 +95,7 @@ const JoinGroup = () => {
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex items-center justify-center">
-            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                            <div className="w-3 h-3 bg-cyan-500 rounded-full"></div>
             <div className="flex-1 h-0.5 bg-gray-300 mx-2"></div>
             <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
             <div className="flex-1 h-0.5 bg-gray-300 mx-2"></div>
@@ -113,7 +113,7 @@ const JoinGroup = () => {
           <p className="text-sm text-gray-700 leading-relaxed">
             Para este serviço é necessário informar o relacionamento que você tem com o administrador. 
             O relacionamento abaixo está de acordo com os termos de uso do serviço desejado. 
-            Ficou com dúvida? <a href="#" className="text-blue-600 underline">Saiba mais</a>.
+                          Ficou com dúvida? <a href="#" className="text-cyan-600 underline">Saiba mais</a>.
           </p>
         </div>
 
@@ -128,7 +128,7 @@ const JoinGroup = () => {
                 key={option.id}
                 className={`cursor-pointer transition-all duration-200 ${
                   isSelected 
-                    ? 'border-blue-500 bg-blue-50' 
+                    ? 'border-cyan-500 bg-cyan-50' 
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
                 onClick={() => setSelectedRelationship(option.id)}
@@ -136,7 +136,7 @@ const JoinGroup = () => {
                 <CardContent className="p-3 text-center relative">
                   {isSelected && (
                     <div className="absolute top-1 right-1">
-                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                      <div className="w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center">
                         <Info className="h-2.5 w-2.5 text-white" />
                       </div>
                     </div>
@@ -182,7 +182,7 @@ const JoinGroup = () => {
           <Button 
             variant="ghost" 
             onClick={handleBack}
-            className="w-full text-blue-600 hover:text-blue-700 text-xs"
+                            className="w-full text-cyan-600 hover:text-cyan-700 text-xs"
           >
             Voltar
           </Button>
@@ -193,7 +193,7 @@ const JoinGroup = () => {
       <div className="fixed bottom-6 right-6">
         <Button 
           size="lg"
-          className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg"
+                          className="w-12 h-12 rounded-full bg-cyan-500 hover:bg-cyan-600 shadow-lg"
         >
           <HelpCircle className="h-5 w-5" />
         </Button>

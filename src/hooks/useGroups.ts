@@ -50,6 +50,8 @@ export const useGroups = () => {
               icon_url
             )
           `)
+          .eq('admin_approved', true)
+          .eq('owner_approved', true)
           .eq('status', 'active_with_slots')
           .order('created_at', { ascending: false });
 
@@ -82,48 +84,48 @@ export const useGroupById = (groupId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchGroup = async () => {
+    if (!groupId) return;
+
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('groups')
+        .select(`
+          *,
+          services:service_id (
+            id,
+            name,
+            category,
+            icon_url
+          ),
+          group_memberships (
+            id,
+            user_id,
+            joined_at
+          )
+        `)
+        .eq('id', groupId)
+        .single();
+
+      if (error) throw error;
+
+      setGroup(data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching group:', err);
+      setError('Erro ao carregar grupo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchGroup = async () => {
-      if (!groupId) return;
-
-      try {
-        setLoading(true);
-        
-        const { data, error } = await supabase
-          .from('groups')
-          .select(`
-            *,
-            services:service_id (
-              id,
-              name,
-              category,
-              icon_url
-            ),
-            group_memberships (
-              id,
-              user_id,
-              joined_at
-            )
-          `)
-          .eq('id', groupId)
-          .single();
-
-        if (error) throw error;
-
-        setGroup(data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching group:', err);
-        setError('Erro ao carregar grupo');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchGroup();
   }, [groupId]);
 
-  return { group, loading, error };
+  return { group, loading, error, refetch: fetchGroup };
 };
 
 // Hook para buscar grupos por categoria

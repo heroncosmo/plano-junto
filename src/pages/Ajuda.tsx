@@ -18,28 +18,28 @@ const Ajuda = () => {
       title: 'Novo no JuntaPlay?',
       description: 'Comece por aqui! Aqui nós te damos os primeiros passos com tudo que precisa saber sobre o JuntaPlay.',
       icon: <Star className="h-6 w-6" />,
-      color: "bg-blue-500"
+      color: "bg-cyan-500"
     },
     {
       id: 'grupos',
       title: 'Grupos',
       description: 'Entenda melhor sobre como funcionam os grupos e como resolver problemas, caso tenha.',
       icon: <Users className="h-6 w-6" />,
-      color: "bg-green-500"
+      color: "bg-cyan-500"
     },
     {
       id: 'pagamentos',
       title: 'Pagamentos',
       description: 'Tem alguma dúvida sobre pagamentos? Sem problemas, te damos uma mãozinha.',
       icon: <CreditCard className="h-6 w-6" />,
-      color: "bg-purple-500"
+      color: "bg-cyan-500"
     },
     {
       id: 'creditos',
       title: 'Créditos',
       description: 'Como funcionam os créditos? Clique aqui para entender melhor sobre o assunto.',
       icon: <Shield className="h-6 w-6" />,
-      color: "bg-orange-500"
+      color: "bg-cyan-500"
     }
   ];
 
@@ -143,21 +143,21 @@ const Ajuda = () => {
       description: "Gerencie seus créditos e transações",
       icon: <CreditCard className="h-6 w-6" />,
       action: () => navigate('/creditos'),
-      color: "bg-green-500"
+      color: "bg-cyan-500"
     },
     {
       title: "Meus Grupos",
       description: "Veja todos os seus grupos",
       icon: <Users className="h-6 w-6" />,
       action: () => navigate('/my-groups'),
-      color: "bg-blue-500"
+      color: "bg-cyan-500"
     },
     {
       title: "Todos os Grupos",
       description: "Encontre grupos para participar",
       icon: <Star className="h-6 w-6" />,
       action: () => navigate('/groups'),
-      color: "bg-purple-500"
+      color: "bg-cyan-500"
     }
   ];
 
@@ -166,7 +166,7 @@ const Ajuda = () => {
       case 'novo':
         return (
           <div className="space-y-6">
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg">
+            <div className="bg-gradient-to-r from-cyan-50 to-cyan-50 p-6 rounded-lg">
               <h3 className="text-xl font-semibold mb-4">Bem-vindo ao JuntaPlay!</h3>
               <p className="text-gray-700 mb-4">
                 O JuntaPlay é a plataforma que te ajuda a economizar dividindo custos de assinaturas 
@@ -178,7 +178,7 @@ const Ajuda = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-blue-600" />
+                    <Users className="h-5 w-5 text-cyan-600" />
                     Passo 1: Criar ou Participar
                   </CardTitle>
                 </CardHeader>
@@ -196,7 +196,7 @@ const Ajuda = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-green-600" />
+                    <CreditCard className="h-5 w-5 text-cyan-600" />
                     Passo 2: Adicionar Créditos
                   </CardTitle>
                 </CardHeader>
@@ -214,7 +214,7 @@ const Ajuda = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-purple-600" />
+                    <Shield className="h-5 w-5 text-cyan-600" />
                     Passo 3: Compartilhar com Segurança
                   </CardTitle>
                 </CardHeader>
@@ -232,7 +232,7 @@ const Ajuda = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Star className="h-5 w-5 text-orange-600" />
+                    <Star className="h-5 w-5 text-cyan-600" />
                     Passo 4: Economizar
                   </CardTitle>
                 </CardHeader>
@@ -260,8 +260,8 @@ const Ajuda = () => {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4 border rounded-lg">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <CheckCircle className="h-6 w-6 text-green-600" />
+                    <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <CheckCircle className="h-6 w-6 text-cyan-600" />
                     </div>
                     <h4 className="font-semibold mb-2">Grupos Públicos</h4>
                     <p className="text-sm text-gray-600">
@@ -270,8 +270,8 @@ const Ajuda = () => {
                   </div>
                   
                   <div className="text-center p-4 border rounded-lg">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <UserCheck className="h-6 w-6 text-blue-600" />
+                                    <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <UserCheck className="h-6 w-6 text-cyan-600" />
                     </div>
                     <h4 className="font-semibold mb-2">Grupos Privados</h4>
                     <p className="text-sm text-gray-600">
@@ -280,8 +280,8 @@ const Ajuda = () => {
                   </div>
                   
                   <div className="text-center p-4 border rounded-lg">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Star className="h-6 w-6 text-purple-600" />
+                    <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Star className="h-6 w-6 text-cyan-600" />
                     </div>
                     <h4 className="font-semibold mb-2">Grupos com Fidelidade</h4>
                     <p className="text-sm text-gray-600">
@@ -320,19 +320,19 @@ const Ajuda = () => {
                     <h4 className="font-semibold">Formas de Pagamento Aceitas</h4>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-cyan-600" />
                         <span>Pix (instantâneo)</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-cyan-600" />
                         <span>Cartão de Crédito</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-cyan-600" />
                         <span>Cartão de Débito</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-cyan-600" />
                         <span>Boleto Bancário</span>
                       </div>
                     </div>
@@ -342,15 +342,15 @@ const Ajuda = () => {
                     <h4 className="font-semibold">Informações Importantes</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5" />
+                        <AlertCircle className="h-4 w-4 text-cyan-600 mt-0.5" />
                         <span>Pagamentos são processados imediatamente</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5" />
+                        <AlertCircle className="h-4 w-4 text-cyan-600 mt-0.5" />
                         <span>Créditos são adicionados automaticamente</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5" />
+                        <AlertCircle className="h-4 w-4 text-cyan-600 mt-0.5" />
                         <span>Reembolsos são processados em até 5 dias úteis</span>
                       </div>
                     </div>
@@ -370,26 +370,26 @@ const Ajuda = () => {
                   </p>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">1</span>
+                      <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center">
+                        <span className="text-cyan-600 font-semibold">1</span>
                       </div>
                       <span>Acesse as configurações do seu perfil</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">2</span>
+                      <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center">
+                        <span className="text-cyan-600 font-semibold">2</span>
                       </div>
                       <span>Adicione um método de pagamento</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">3</span>
+                      <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center">
+                        <span className="text-cyan-600 font-semibold">3</span>
                       </div>
                       <span>Configure o valor e frequência dos pagamentos</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">4</span>
+                      <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center">
+                        <span className="text-cyan-600 font-semibold">4</span>
                       </div>
                       <span>Ative a renovação automática</span>
                     </div>
@@ -409,7 +409,7 @@ const Ajuda = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg">
+                  <div className="bg-gradient-to-r from-cyan-50 to-cyan-50 p-6 rounded-lg">
                     <h4 className="font-semibold mb-3">O que são Créditos?</h4>
                     <p className="text-gray-700">
                       Créditos são a moeda virtual do JuntaPlay. Você pode adicionar créditos através de 
@@ -423,19 +423,19 @@ const Ajuda = () => {
                       <h4 className="font-semibold">Como Ganhar Créditos</h4>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-cyan-600" />
                           <span>Adicionando dinheiro via pagamentos</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-cyan-600" />
                           <span>Quando pessoas participam dos seus grupos</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-cyan-600" />
                           <span>Programa de indicação</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-cyan-600" />
                           <span>Promoções e bônus</span>
                         </div>
                       </div>
@@ -566,7 +566,7 @@ const Ajuda = () => {
                 <Card 
                   key={section.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${
-                    activeSection === section.id ? 'ring-2 ring-blue-500' : ''
+                    activeSection === section.id ? 'ring-2 ring-cyan-500' : ''
                   }`}
                   onClick={() => setActiveSection(section.id)}
                 >
@@ -692,7 +692,7 @@ const Ajuda = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <MessageCircle className="h-5 w-5 text-blue-600" />
+                  <MessageCircle className="h-5 w-5 text-cyan-600" />
                   <div>
                     <p className="font-medium">Chat Online</p>
                     <p className="text-sm text-gray-600">Fale com nosso suporte</p>
@@ -700,7 +700,7 @@ const Ajuda = () => {
                 </div>
                 
                 <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <Mail className="h-5 w-5 text-green-600" />
+                  <Mail className="h-5 w-5 text-cyan-600" />
                   <div>
                     <p className="font-medium">E-mail</p>
                     <p className="text-sm text-gray-600">suporte@juntaplay.com</p>
@@ -708,7 +708,7 @@ const Ajuda = () => {
                 </div>
                 
                 <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <Phone className="h-5 w-5 text-purple-600" />
+                  <Phone className="h-5 w-5 text-cyan-600" />
                   <div>
                     <p className="font-medium">Telefone</p>
                     <p className="text-sm text-gray-600">(11) 99999-9999</p>

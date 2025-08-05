@@ -104,3 +104,55 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Função para liberar grupo pelo dono
+CREATE OR REPLACE FUNCTION approve_group_by_owner(
+  group_uuid UUID,
+  user_uuid UUID
+)
+RETURNS JSON AS $$
+DECLARE
+  group_data RECORD;
+BEGIN
+  -- Verificar se o grupo existe e se o usuário é o admin
+  SELECT * INTO group_data
+  FROM public.groups
+  WHERE id = group_uuid AND admin_id = user_uuid;
+
+  IF NOT FOUND THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Grupo não encontrado ou você não tem permissão'
+    );
+  END IF;
+
+  -- Verificar se o grupo foi aprovado pelo admin
+  IF NOT group_data.admin_approved THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Grupo ainda não foi aprovado pelo administrador'
+    );
+  END IF;
+
+  -- Verificar se já foi liberado pelo dono
+  IF group_data.owner_approved THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Grupo já foi liberado'
+    );
+  END IF;
+
+  -- Liberar o grupo
+  UPDATE public.groups
+  SET
+    owner_approved = true,
+    status = 'active_with_slots',
+    updated_at = now()
+  WHERE id = group_uuid;
+
+  RETURN json_build_object(
+    'success', true,
+    'message', 'Grupo liberado com sucesso'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

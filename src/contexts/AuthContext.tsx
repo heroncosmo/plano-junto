@@ -31,9 +31,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔍 DEBUG - AuthContext: Configurando listener de autenticação...');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('🔍 DEBUG - AuthContext: Evento de autenticação:', event, { session: !!session, user: !!session?.user });
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -42,6 +45,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔍 DEBUG - AuthContext: Sessão inicial:', { session: !!session, user: !!session?.user });
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -72,7 +76,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    console.log('🔍 DEBUG - Iniciando logout...');
+    try {
+      // Primeiro, limpa o estado local
+      setUser(null);
+      setSession(null);
+      console.log('🔍 DEBUG - Estado local limpo primeiro');
+      
+      // Depois, chama o signOut do Supabase
+      const { error } = await supabase.auth.signOut();
+      console.log('🔍 DEBUG - Resultado do logout:', { error });
+      if (error) {
+        console.error('❌ ERRO no logout:', error);
+      } else {
+        console.log('✅ Logout realizado com sucesso');
+        // Força a limpeza do estado local novamente
+        setUser(null);
+        setSession(null);
+        console.log('🔍 DEBUG - Estado local limpo novamente');
+      }
+    } catch (err) {
+      console.error('❌ EXCEÇÃO no logout:', err);
+    }
   };
 
   const value = {
