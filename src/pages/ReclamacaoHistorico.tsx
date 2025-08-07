@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Send, Paperclip, AlertTriangle, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,89 +15,104 @@ const ReclamacaoHistorico: React.FC = () => {
   const groupId = searchParams.get('groupId');
   const { user } = useAuth();
   const [message, setMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('outros');
-  const [complaint, setComplaint] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [complaint, setComplaint] = useState<any>(null);
 
-  // Dados da reclamação
+  // Dados da reclamação - serão carregados do localStorage ou URL params
   const [complaintData, setComplaintData] = useState({
-    problemType: 'Outros',
-    desiredSolution: 'Cancelamento da minha inscrição e reembolso',
+    problemType: '',
+    problemDescription: '',
+    desiredSolution: '',
     status: 'pending',
-    interventionDeadline: '2025-08-11',
+    interventionDeadline: '',
     messages: [
       {
         id: 1,
         user: 'D',
-        message: 'vamos resolver, preciso cancelar por favor me ajude',
-        date: '04/08/25',
-        type: 'user_message'
-      },
-      {
-        id: 2,
-        user: 'D',
         message: 'Abertura da reclamação',
-        date: '04/08/25',
+        date: new Date().toLocaleDateString('pt-BR'),
         type: 'opening'
       }
     ]
   });
 
-  // Criar reclamação no banco de dados
+  // Carregar dados preenchidos anteriormente
   useEffect(() => {
-    const createComplaint = async () => {
-      if (!user || !groupId) return;
-
-      setLoading(true);
-      try {
-        // Buscar dados do grupo
-        const { data: groupData, error: groupError } = await supabase
-          .from('groups')
-          .select('*, admin_id, services(*)')
-          .eq('id', groupId)
-          .single();
-
-        if (groupError) throw groupError;
-
-        // Criar a reclamação
-        const { data: complaint, error } = await supabase
-          .from('complaints')
-          .insert({
-            user_id: user.id,
-            group_id: groupId,
-            admin_id: groupData.admin_id,
-            problem_type: 'other',
-            desired_solution: 'subscription_cancellation_and_refund',
-            status: 'pending',
-            user_contacted_admin: true,
-            admin_response_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            intervention_deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        setComplaint(complaint);
+    const loadComplaintData = () => {
+      // Tentar carregar dados do localStorage
+      const savedData = localStorage.getItem(`complaint_data_${groupId}`);
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          setComplaintData(prev => ({
+            ...prev,
+            ...parsedData,
+            interventionDeadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')
+          }));
+        } catch (error) {
+          console.error('Erro ao carregar dados salvos:', error);
+        }
+      } else {
+        // Se não há dados salvos, usar dados padrão baseados na URL
+        const problemType = searchParams.get('problemType') || 'other';
+        const desiredSolution = searchParams.get('desiredSolution') || 'subscription_cancellation_and_refund';
+        
         setComplaintData(prev => ({
           ...prev,
+          problemType: getProblemTypeText(problemType),
+          desiredSolution: getDesiredSolutionText(desiredSolution),
           interventionDeadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')
         }));
-
-      } catch (error) {
-        console.error('Erro ao criar reclamação:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
-    createComplaint();
-  }, [user, groupId]);
+    loadComplaintData();
+  }, [groupId, searchParams]);
+
+  // Funções auxiliares para converter códigos em texto
+  const getProblemTypeText = (code: string) => {
+    switch (code) {
+      case 'subscription_stopped':
+        return 'Assinatura parou de funcionar';
+      case 'service_different_description':
+        return 'Serviço diferente da descrição';
+      case 'admin_payment_outside_site':
+        return 'Administrador solicitando pagamento fora do site';
+      case 'other':
+      default:
+        return 'Outro motivo';
+    }
+  };
+
+  const getDesiredSolutionText = (code: string) => {
+    switch (code) {
+      case 'problem_solution':
+        return 'Solução do problema';
+      case 'problem_solution_and_refund':
+        return 'Solução do problema e reembolso dos dias até a solução';
+      case 'subscription_cancellation_and_refund':
+        return 'Cancelamento da sua assinatura e reembolso';
+      default:
+        return 'Cancelamento da sua assinatura e reembolso';
+    }
+  };
 
   const handleSendMessage = () => {
     if (message.trim()) {
-      // Aqui seria enviada a mensagem para o banco
-      console.log('Enviando mensagem:', message);
+      // Adicionar mensagem ao histórico local
+      const newMessage = {
+        id: Date.now(),
+        user: 'D',
+        message: message.trim(),
+        date: new Date().toLocaleDateString('pt-BR'),
+        type: 'user_message'
+      };
+
+      setComplaintData(prev => ({
+        ...prev,
+        messages: [...prev.messages, newMessage]
+      }));
+
       setMessage('');
     }
   };
@@ -113,9 +127,75 @@ const ReclamacaoHistorico: React.FC = () => {
     console.log('Anexando evidência');
   };
 
-  const handleSubmitComplaint = () => {
-    if (complaint) {
-      navigate(`/reclamacao/status?groupId=${groupId}`);
+  const handleSubmitComplaint = async () => {
+    if (!user || !groupId) return;
+
+    setLoading(true);
+    try {
+      // Buscar dados do grupo
+      const { data: groupData, error: groupError } = await supabase
+        .from('groups')
+        .select('admin_id')
+        .eq('id', groupId)
+        .single();
+
+      if (groupError) throw groupError;
+
+      // Criar a reclamação
+      const { data: complaint, error } = await supabase
+        .from('complaints')
+        .insert({
+          user_id: user.id,
+          group_id: groupId,
+          admin_id: groupData.admin_id,
+          problem_type: searchParams.get('problemType') || 'other',
+          problem_description: complaintData.problemDescription,
+          desired_solution: searchParams.get('desiredSolution') || 'subscription_cancellation_and_refund',
+          status: 'pending',
+          user_contacted_admin: true,
+          admin_response_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          intervention_deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Adicionar mensagem inicial
+      if (complaintData.messages.length > 0) {
+        await supabase
+          .from('complaint_messages')
+          .insert({
+            complaint_id: complaint.id,
+            user_id: user.id,
+            message_type: 'opening',
+            message: 'Abertura da reclamação'
+          });
+      }
+
+      // Adicionar mensagens do usuário
+      const userMessages = complaintData.messages.filter(msg => msg.type === 'user_message');
+      for (const msg of userMessages) {
+        await supabase
+          .from('complaint_messages')
+          .insert({
+            complaint_id: complaint.id,
+            user_id: user.id,
+            message_type: 'user_message',
+            message: msg.message
+          });
+      }
+
+      // Limpar dados do localStorage
+      localStorage.removeItem(`complaint_data_${groupId}`);
+
+      // Navegar para a página de status
+      navigate(`/reclamacao/status?groupId=${groupId}&complaintId=${complaint.id}`);
+
+    } catch (error) {
+      console.error('Erro ao criar reclamação:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -235,14 +315,14 @@ const ReclamacaoHistorico: React.FC = () => {
                 </div>
               </div>
 
-              {/* Botão finalizar */}
+              {/* Botão enviar reclamação */}
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <Button 
                   onClick={handleSubmitComplaint}
                   className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
                   disabled={loading}
                 >
-                  {loading ? 'Criando reclamação...' : 'Finalizar reclamação'}
+                  {loading ? 'Enviando reclamação...' : 'Enviar reclamação'}
                 </Button>
               </div>
             </CardContent>

@@ -35,8 +35,18 @@ const ReclamacaoOqueAconteceu: React.FC = () => {
 
   const handleNext = () => {
     if (selectedProblem) {
+      // Salvar dados no localStorage
       if (groupId) {
-        navigate(`/reclamacao/solucao-desejada?groupId=${groupId}`);
+        const savedData = localStorage.getItem(`complaint_data_${groupId}`) || '{}';
+        const parsedData = JSON.parse(savedData);
+        localStorage.setItem(`complaint_data_${groupId}`, JSON.stringify({
+          ...parsedData,
+          problemType: selectedProblem
+        }));
+      }
+
+      if (groupId) {
+        navigate(`/reclamacao/solucao-desejada?groupId=${groupId}&problemType=${selectedProblem}`);
       } else {
         navigate('/reclamacao/solucao-desejada');
       }

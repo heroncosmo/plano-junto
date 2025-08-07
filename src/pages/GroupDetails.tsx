@@ -744,7 +744,7 @@ const GroupDetails = () => {
               <h2 className="text-base font-semibold mb-3">Administrador</h2>
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src="/placeholder.svg" />
+                  <AvatarImage src="/juntaplay-logo.svg" />
                   <AvatarFallback className="bg-cyan-100 text-cyan-600">
                     {adminData?.full_name ? adminData.full_name.charAt(0).toUpperCase() : 'A'}
                   </AvatarFallback>
@@ -821,7 +821,7 @@ const GroupDetails = () => {
                     <div key={member.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src="/placeholder.svg" />
+                          <AvatarImage src="/juntaplay-logo.svg" />
                           <AvatarFallback className="bg-cyan-100 text-cyan-600">
                             {member.profile?.full_name ? member.profile.full_name.charAt(0).toUpperCase() : 'M'}
                           </AvatarFallback>

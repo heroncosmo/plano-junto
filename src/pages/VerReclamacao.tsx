@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useToast } from '@/hooks/use-toast';
+import { isAdmin } from '@/lib/admin-config';
 
 const VerReclamacao: React.FC = () => {
   const { complaintId } = useParams();
@@ -20,6 +21,13 @@ const VerReclamacao: React.FC = () => {
   const [complaint, setComplaint] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Função para verificar se uma mensagem é de mediação do sistema
+  const isSystemMediationMessage = (message: any) => {
+    // Verificar se a mensagem foi enviada por um admin do sistema
+    // Para isso, precisamos verificar se o user_id da mensagem pertence a um admin
+    return message.message_type === 'system_message' && isAdmin(message.user_email);
+  };
 
   // Carregar dados da reclamação
   useEffect(() => {
@@ -71,15 +79,25 @@ const VerReclamacao: React.FC = () => {
         // Para cada mensagem, buscar dados do usuário
         const messagesWithUserData = await Promise.all(
           (messagesData || []).map(async (message) => {
+            // Buscar dados do perfil
             const { data: userData } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('user_id', message.user_id)
               .single();
 
+            // Buscar email do usuário para verificar se é admin
+            const { data: authUser } = await supabase.auth.getUser();
+            
+            // Usar RPC para buscar email do usuário da mensagem
+            const { data: userEmail } = await supabase.rpc('get_user_email', {
+              user_uuid: message.user_id
+            });
+
             return {
               ...message,
-              user_name: userData?.full_name || 'Usuário não encontrado'
+              user_name: userData?.full_name || 'Usuário não encontrado',
+              user_email: userEmail || null
             };
           })
         );
@@ -400,13 +418,15 @@ const VerReclamacao: React.FC = () => {
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-1">Prazo para resposta do admin</h3>
                     <p className="text-sm text-gray-900">
-                      {new Date(complaint.admin_response_deadline).toLocaleDateString('pt-BR')}
+                      {new Date(complaint.admin_response_deadline).toLocaleDateString('pt-BR')} às{' '}
+                      {new Date(complaint.admin_response_deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-1">Intervenção da JuntaPlay</h3>
                     <p className="text-sm text-gray-900">
-                      {new Date(complaint.intervention_deadline).toLocaleDateString('pt-BR')}
+                      {new Date(complaint.intervention_deadline).toLocaleDateString('pt-BR')} às{' '}
+                      {new Date(complaint.intervention_deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                   <div>
@@ -425,6 +445,22 @@ const VerReclamacao: React.FC = () => {
                 </p>
               </div>
 
+              {/* Aviso de mediação ativa */}
+              {messages.some(msg => isSystemMediationMessage(msg)) && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                      <span className="text-xs font-medium text-blue-600">MS</span>
+                    </div>
+                    <h3 className="text-sm font-medium text-blue-800">Mediação do Sistema Ativa</h3>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    🔄 A JuntaPlay entrou em mediação para resolver esta reclamação. 
+                    Todas as comunicações agora são mediadas pelo sistema.
+                  </p>
+                </div>
+              )}
+
               {/* Mensagens */}
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Histórico de mensagens</h3>
@@ -434,14 +470,16 @@ const VerReclamacao: React.FC = () => {
                       <div className="flex-shrink-0">
                         <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center">
                           <span className="text-xs font-medium text-cyan-600">
-                            {msg.user_name?.charAt(0) || 'U'}
+                            {isSystemMediationMessage(msg) ? 'MS' : (msg.user_name?.charAt(0) || 'U')}
                           </span>
                         </div>
                       </div>
                       <div className="flex-1">
                         <div className="bg-white border border-gray-200 rounded-lg p-3">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-900">{msg.user_name}</span>
+                            <span className="text-sm font-medium text-gray-900">
+                              {isSystemMediationMessage(msg) ? 'Mediação do Sistema' : msg.user_name}
+                            </span>
                             <span className="text-xs text-gray-500">
                               {new Date(msg.created_at).toLocaleDateString('pt-BR')}
                             </span>

@@ -26,7 +26,13 @@ import CreateGroupInfo from "./pages/CreateGroupInfo";
 import CreateGroupFidelity from "./pages/CreateGroupFidelity";
 import CreateGroupConfirmation from "./pages/CreateGroupConfirmation";
 import ManageGroup from "./pages/ManageGroup";
-import AdminPanel from "./pages/AdminPanel";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminClients from "./pages/admin/AdminClients";
+import AdminTransactions from "./pages/admin/AdminTransactions";
+import AdminGroups from "./pages/admin/AdminGroups";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals";
+import AdminComplaints from "./pages/admin/AdminComplaints";
 import Creditos from "./pages/Creditos";
 import AdicionarCreditos from "./pages/AdicionarCreditos";
 import SacarCreditos from "./pages/SacarCreditos";
@@ -108,11 +114,19 @@ const AppRouter = () => {
                   <ManageGroup />
                 </RequireAuth>
               } />
+              {/* Admin Routes */}
               <Route path="/admin" element={
                 <RequireAuth>
-                  <AdminPanel />
+                  <AdminLayout />
                 </RequireAuth>
-              } />
+              }>
+                <Route index element={<AdminDashboard />} />
+                <Route path="clients" element={<AdminClients />} />
+                <Route path="transactions" element={<AdminTransactions />} />
+                <Route path="groups" element={<AdminGroups />} />
+                <Route path="withdrawals" element={<AdminWithdrawals />} />
+                <Route path="complaints" element={<AdminComplaints />} />
+              </Route>
               <Route path="/join-group/:id" element={
                 <RequireAuth>
                   <JoinGroup />

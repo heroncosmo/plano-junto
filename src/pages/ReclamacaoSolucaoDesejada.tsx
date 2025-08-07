@@ -31,8 +31,19 @@ const ReclamacaoSolucaoDesejada: React.FC = () => {
 
   const handleNext = () => {
     if (selectedSolution) {
+      // Salvar dados no localStorage
       if (groupId) {
-        navigate(`/reclamacao/historico?groupId=${groupId}`);
+        const savedData = localStorage.getItem(`complaint_data_${groupId}`) || '{}';
+        const parsedData = JSON.parse(savedData);
+        localStorage.setItem(`complaint_data_${groupId}`, JSON.stringify({
+          ...parsedData,
+          desiredSolution: selectedSolution
+        }));
+      }
+
+      if (groupId) {
+        const problemType = searchParams.get('problemType') || 'other';
+        navigate(`/reclamacao/historico?groupId=${groupId}&problemType=${problemType}&desiredSolution=${selectedSolution}`);
       } else {
         navigate('/reclamacao/historico');
       }
