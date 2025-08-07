@@ -12,29 +12,11 @@ const LogoPrint = () => {
           <span className="text-6xl font-bold text-gray-900">JuntaPlay</span>
         </div>
         
-        {/* Versão SVG da Logo */}
+        {/* Versão da Logo */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-700">Versão SVG da Logo</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-700">Versão da Logo</h2>
           <div className="w-64 h-64 mx-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="256" height="256">
-              <defs>
-                <linearGradient id="juntaplay-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#06b6d4" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#0891b2" stopOpacity="1" />
-                </linearGradient>
-              </defs>
-              
-              {/* Background circle */}
-              <circle cx="60" cy="60" r="55" fill="url(#juntaplay-gradient)" stroke="#0891b2" strokeWidth="2"/>
-              
-              {/* Letter J (white, bold) */}
-              <path d="M30 30h12v36c0 6.6 5.4 12 12 12s12-5.4 12-12V30h12v36c0 13.2-10.8 24-24 24s-24-10.8-24-24V30z" fill="white"/>
-              
-              {/* Small dots representing community */}
-              <circle cx="85" cy="35" r="4" fill="white" opacity="0.8"/>
-              <circle cx="95" cy="45" r="3" fill="white" opacity="0.6"/>
-              <circle cx="80" cy="50" r="3" fill="white" opacity="0.6"/>
-            </svg>
+            <img src="/j.png" alt="JuntaPlay Logo" className="w-full h-full" />
           </div>
         </div>
         
@@ -42,7 +24,7 @@ const LogoPrint = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4 text-gray-700">Versão em Alta Resolução (400x400)</h2>
           <div className="w-80 h-80 mx-auto">
-            <img src="/juntaplay-logo-high-res.svg" alt="JuntaPlay Logo High Res" className="w-full h-full" />
+            <img src="/j.png" alt="JuntaPlay Logo High Res" className="w-full h-full" />
           </div>
         </div>
         
@@ -63,9 +45,13 @@ const LogoPrint = () => {
           <p>📸 Tire um screenshot desta página para obter a logo em alta resolução</p>
           <p>💾 Logos disponíveis:</p>
           <ul className="list-disc list-inside mt-2 space-y-1">
-            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/juntaplay-logo.svg</code> - Versão padrão (120x120)</li>
-            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/juntaplay-logo-high-res.svg</code> - Alta resolução (400x400)</li>
-            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/favicon.svg</code> - Favicon (32x32)</li>
+            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/j.png</code> - Logo principal</li>
+            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/favicon.ico</code> - Favicon ICO</li>
+            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/favicon-32x32.png</code> - Favicon 32x32</li>
+            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/favicon-16x16.png</code> - Favicon 16x16</li>
+            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/apple-touch-icon.png</code> - Ícone Apple</li>
+            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/android-chrome-192x192.png</code> - Ícone Android 192x192</li>
+            <li><code className="bg-gray-100 px-2 py-1 rounded">/public/android-chrome-512x512.png</code> - Ícone Android 512x512</li>
           </ul>
         </div>
       </div>
