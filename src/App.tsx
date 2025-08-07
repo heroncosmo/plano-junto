@@ -61,6 +61,7 @@ import CancelamentoReclamacao from "./pages/CancelamentoReclamacao";
 import CancelamentoMotivo from "./pages/CancelamentoMotivo";
 import CancelamentoConfirmacao from "./pages/CancelamentoConfirmacao";
 import CancelamentoSucesso from "./pages/CancelamentoSucesso";
+import LogoPrint from "./pages/LogoPrint";
 
 const queryClient = new QueryClient();
 
@@ -299,6 +300,9 @@ const AppRouter = () => {
               <Route path="/termos-de-uso" element={<TermosDeUso />} />
               <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
               <Route path="/taxas" element={<Taxas />} />
+              
+              {/* Logo Print - Página para capturar a logo */}
+              <Route path="/logo-print" element={<LogoPrint />} />
               
               {/* Rota catch-all */}
               <Route path="*" element={<NotFound />} />

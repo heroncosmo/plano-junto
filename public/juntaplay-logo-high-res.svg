@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="juntaplay-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="1" />
+      <stop offset="100%" stop-color="#0891b2" stop-opacity="1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="200" cy="200" r="180" fill="url(#juntaplay-gradient)" stroke="#0891b2" stroke-width="4"/>
+  
+  <!-- Letter J -->
+  <path d="M100 100h40v120c0 22 18 40 40 40s40-18 40-40V100h40v120c0 44-36 80-80 80s-80-36-80-80V100z" fill="white"/>
+  
+  <!-- Small dots representing community -->
+  <circle cx="280" cy="120" r="12" fill="white" opacity="0.8"/>
+  <circle cx="310" cy="150" r="8" fill="white" opacity="0.6"/>
+  <circle cx="270" cy="170" r="8" fill="white" opacity="0.6"/>
+</svg>
