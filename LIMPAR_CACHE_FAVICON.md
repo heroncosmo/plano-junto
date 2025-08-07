@@ -7,13 +7,15 @@ O ícone do navegador no mobile ainda está mostrando a logo da Lovable em vez d
 
 ### 1. **Novo Favicon Criado**
 - ✅ Criado `/public/favicon-juntaplay.svg` - Logo do JuntaPlay
-- ✅ Removido `/public/favicon.ico` antigo (que continha logo incorreta)
+- ✅ **REMOVIDO** `/public/favicon.ico` antigo (que continha logo incorreta com "U")
+- ✅ **REMOVIDO** `/public/favicon.png` placeholder
 - ✅ Atualizadas todas as referências no `index.html`
+- ✅ Favicon agora usa formato quadrado com "J" (igual ao header)
 
 ### 2. **Meta Tags Atualizadas**
 - ✅ `theme-color`: Mudado para cyan (#06b6d4)
 - ✅ `msapplication-TileColor`: Mudado para cyan (#06b6d4)
-- ✅ Favicon: Apontando para `/favicon-juntaplay.svg`
+- ✅ Favicon: Apontando para `/favicon.svg` (com "J" correto)
 
 ## 🧹 **Como Limpar o Cache**
 
@@ -63,10 +65,16 @@ O ícone do navegador no mobile ainda está mostrando a logo da Lovable em vez d
 ## 📋 **Arquivos Atualizados**
 
 - ✅ `index.html` - Meta tags atualizadas
-- ✅ `public/favicon-juntaplay.svg` - Novo favicon
-- ✅ `public/favicon.ico` - Removido (antigo)
+- ✅ `public/favicon.svg` - Novo favicon com "J"
+- ✅ `public/favicon-juntaplay.svg` - Favicon alternativo
+- ✅ `public/favicon.ico` - **REMOVIDO** (antigo com "U")
+- ✅ `public/favicon.png` - **REMOVIDO** (placeholder)
 - ✅ Cores atualizadas para cyan (#06b6d4)
+
+## 🎯 **Resultado Esperado**
+
+**Ícone do navegador mostra a logo do JuntaPlay (J em cyan) em vez da Lovable.**
 
 ---
 
-**🎯 Resultado Esperado:** Ícone do navegador mostra a logo do JuntaPlay (J em cyan) em vez da Lovable.
+**⚠️ IMPORTANTE:** O arquivo `favicon.ico` antigo foi removido porque continha a logo incorreta com "U". Agora todos os favicons mostram o "J" correto do JuntaPlay.
