@@ -9,7 +9,7 @@
   <!-- Background circle -->
   <circle cx="60" cy="60" r="55" fill="url(#juntaplay-gradient)" stroke="#0891b2" stroke-width="2"/>
   
-  <!-- Letter J -->
+  <!-- Letter J (white, bold) -->
   <path d="M30 30h12v36c0 6.6 5.4 12 12 12s12-5.4 12-12V30h12v36c0 13.2-10.8 24-24 24s-24-10.8-24-24V30z" fill="white"/>
   
   <!-- Small dots representing community -->

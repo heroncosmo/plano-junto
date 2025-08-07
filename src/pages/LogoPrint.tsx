@@ -19,15 +19,15 @@ const LogoPrint = () => {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="256" height="256">
               <defs>
                 <linearGradient id="juntaplay-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor: "#06b6d4", stopOpacity: 1}} />
-                  <stop offset="100%" style={{stopColor: "#0891b2", stopOpacity: 1}} />
+                  <stop offset="0%" stopColor="#06b6d4" stopOpacity="1" />
+                  <stop offset="100%" stopColor="#0891b2" stopOpacity="1" />
                 </linearGradient>
               </defs>
               
               {/* Background circle */}
               <circle cx="60" cy="60" r="55" fill="url(#juntaplay-gradient)" stroke="#0891b2" strokeWidth="2"/>
               
-              {/* Letter J */}
+              {/* Letter J (white, bold) */}
               <path d="M30 30h12v36c0 6.6 5.4 12 12 12s12-5.4 12-12V30h12v36c0 13.2-10.8 24-24 24s-24-10.8-24-24V30z" fill="white"/>
               
               {/* Small dots representing community */}
