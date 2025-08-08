@@ -381,7 +381,7 @@ const Payment = () => {
       throw new Error('Cartão vencido');
     }
 
-    // Preparar dados para o MercadoPago (usar variáveis já definidas)
+    // Preparar dados para o MercadoPago
 
     const tokenData = {
       cardNumber: cleanCardNumber,
@@ -413,6 +413,13 @@ const Payment = () => {
       expiry: expiry,
       cvv: cvv,
       docNumber: docNumber
+    });
+
+    console.log('Variáveis de data processadas:', {
+      expMonth: expMonth,
+      expYear: expYear,
+      expMonthPadded: expMonth?.padStart(2, '0'),
+      expYearFull: expYear
     });
 
     // Validações finais antes de enviar
