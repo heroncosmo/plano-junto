@@ -76,9 +76,54 @@ const Payment = () => {
   const [payingCard, setPayingCard] = useState(false);
   const [cardBrand, setCardBrand] = useState<string>('');
   const [cardErrors, setCardErrors] = useState<{[key: string]: string}>({});
+  const [testMode, setTestMode] = useState(false);
 
   const relationship = searchParams.get('relationship') || 'familia';
   const { group, loading, error } = useGroupById(id || '');
+
+  // Função para preencher dados de teste automaticamente
+  const fillTestData = () => {
+    setCardNumber('4000 0000 0000 0002');
+    setCardName('TESTE USUARIO');
+    setExpiry('12/25');
+    setCvv('123');
+    setDocNumber('111.444.777-35');
+    setTestMode(true);
+
+    console.log('🧪 Dados de teste preenchidos automaticamente');
+  };
+
+  // Função para testar apenas a criação do token
+  const testTokenCreation = async () => {
+    if (!mpPublicKey) {
+      console.error('❌ Chave pública do MercadoPago não configurada');
+      return;
+    }
+
+    try {
+      console.log('🧪 Iniciando teste de criação de token...');
+      const token = await createCardToken(
+        '4000000000000002',
+        'TESTE USUARIO',
+        '12/25',
+        '123',
+        '11144477735'
+      );
+      console.log('✅ Token criado com sucesso:', token);
+      toast({
+        title: "Sucesso!",
+        description: "Token criado com sucesso: " + token.substring(0, 20) + "...",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('❌ Erro ao criar token:', error);
+      toast({
+        title: "Erro no teste",
+        description: String(error),
+        variant: "destructive",
+      });
+    }
+  };
 
   // Função para detectar bandeira do cartão
   const detectCardBrand = (number: string): string => {
@@ -458,7 +503,9 @@ const Payment = () => {
         identificationType: tokenData.identificationType,
         identificationNumber: tokenData.identificationNumber,
         cardExpirationMonth: month,
-        cardExpirationYear: year
+        cardExpirationYear: year,
+        docType: 'CPF', // Campo obrigatório que estava faltando
+        docNumber: tokenData.identificationNumber // Mesmo valor do identificationNumber
       };
 
       console.log('Dados enviados para MP com nomes corretos:', mpTokenData);
@@ -969,6 +1016,30 @@ const Payment = () => {
 
                 <Card className="border border-gray-200 shadow-xl bg-gradient-to-br from-white via-gray-50 to-white backdrop-blur-sm">
                   <CardContent className="p-8 space-y-6">
+                    {/* Botões de Teste - Apenas em desenvolvimento */}
+                    {window.location.hostname === 'localhost' && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-2">
+                        <h4 className="text-sm font-medium text-yellow-800">🧪 Modo de Teste</h4>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={fillTestData}
+                            className="text-xs"
+                          >
+                            Preencher Dados de Teste
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={testTokenCreation}
+                            className="text-xs"
+                          >
+                            Testar Token MP
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     {/* Progress Indicator */}
                     <div className="mb-6">
                       <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
