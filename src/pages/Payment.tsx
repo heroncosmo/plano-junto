@@ -54,17 +54,10 @@ const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('balance');
   const [showMoreMethods, setShowMoreMethods] = useState(false);
 
-  const [showPixModal, setShowPixModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [processing, setProcessing] = useState(false);
   const [userBalance, setUserBalance] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(true);
-
-  // PIX state
-  const [pixQrBase64, setPixQrBase64] = useState<string | null>(null);
-  const [pixCode, setPixCode] = useState<string | null>(null);
-  const [paymentId, setPaymentId] = useState<string | null>(null);
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // Card state
   const [mpPublicKey, setMpPublicKey] = useState<string>('');
@@ -286,13 +279,93 @@ const Payment = () => {
       loadPublicKey();
     }
 
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
+
   }, [user, toast]);
 
   const monthlyFee = group?.price_per_slot_cents || 6750; // R$ 67,50
   const deposit = monthlyFee;
+
+  // Função para verificar status do cartão múltiplas vezes
+  const handleCardAnalysis = async (paymentId: string, orderId: string) => {
+    const maxAttempts = 3;
+    const delayBetweenAttempts = 3000; // 3 segundos
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        console.log(`🔄 Tentativa ${attempt}/${maxAttempts} - Verificando status do cartão...`);
+
+        // Aguardar antes da verificação (exceto primeira tentativa)
+        if (attempt > 1) {
+          await new Promise(resolve => setTimeout(resolve, delayBetweenAttempts));
+        }
+
+        // Verificar status no MercadoPago
+        const { data: mpData, error: mpError } = await supabase.functions.invoke('mercadopago-status', {
+          body: { id: paymentId }
+        });
+
+        if (mpError) {
+          console.error('Erro ao verificar status:', mpError);
+          continue;
+        }
+
+        const mpStatus = mpData?.payment?.status;
+        const mpStatusDetail = mpData?.payment?.status_detail;
+
+        console.log(`📊 Tentativa ${attempt} - Status:`, { mpStatus, mpStatusDetail });
+
+        if (mpStatus === 'approved' || mpStatus === 'authorized') {
+          // ✅ APROVADO
+          console.log('✅ Pagamento aprovado na verificação!');
+
+          const { data: processResult, error: processError } = await supabase.rpc('process_order_payment', {
+            p_order_id: orderId,
+            p_external_payment_id: paymentId,
+            p_external_payment_data: mpData.payment
+          });
+
+          if (!processError && processResult?.success) {
+            toast({ title: 'Sucesso!', description: 'Pagamento aprovado! Bem-vindo ao grupo!' });
+            setTimeout(() => navigate(`/payment/success/card`), 1000);
+            return;
+          }
+        } else if (mpStatus === 'rejected' || mpStatus === 'cancelled') {
+          // ❌ REJEITADO
+          console.log('❌ Pagamento rejeitado na verificação');
+
+          await supabase
+            .from('orders')
+            .update({
+              status: 'failed',
+              external_payment_data: mpData.payment
+            })
+            .eq('id', orderId);
+
+          const rejectionReason = getRejectReason(mpStatusDetail);
+          throw new Error(rejectionReason);
+        }
+
+        // Se ainda está em análise, continuar tentativas
+        console.log(`⏳ Ainda em análise na tentativa ${attempt}`);
+
+      } catch (error) {
+        console.error(`Erro na tentativa ${attempt}:`, error);
+        if (attempt === maxAttempts) {
+          throw error;
+        }
+      }
+    }
+
+    // Após 3 tentativas, ainda em análise - redirecionar para detalhes
+    console.log('⏳ Após 3 tentativas, ainda em análise - redirecionando para detalhes');
+
+    toast({
+      title: 'Pagamento em Análise',
+      description: 'Seu pagamento está sendo analisado. Acompanhe o status na seção Faturas.'
+    });
+
+    setTimeout(() => navigate(`/faturas?highlight=${orderId}`), 1500);
+  };
   const total = monthlyFee + deposit;
   const pixFee = 68; // R$ 0,68
   const cardFee = 150; // R$ 1,50
@@ -303,71 +376,7 @@ const Payment = () => {
     }
   };
 
-  const startPixPolling = async (paymentId: string, orderId: string) => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
 
-    pollingRef.current = setInterval(async () => {
-      try {
-        // Verificar status do pedido no banco (pode ter sido processado por webhook ou cron)
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('id', orderId)
-          .single();
-
-        if (orderError) {
-          console.error('Erro ao verificar pedido:', orderError);
-          return;
-        }
-
-        if (orderData.status === 'paid') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
-          toast({ title: 'Sucesso!', description: 'Pagamento aprovado via PIX.' });
-          setShowPixModal(false);
-          setTimeout(() => {
-            navigate(`/payment/success/${paymentId}`);
-          }, 800);
-          return;
-        }
-
-        if (orderData.status === 'failed' || orderData.status === 'expired') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
-          toast({ title: 'Erro', description: 'Pagamento não foi aprovado ou expirou', variant: 'destructive' });
-          setShowPixModal(false);
-          return;
-        }
-
-        // Se ainda está pendente, verificar no MercadoPago também
-        const { data, error } = await supabase.functions.invoke('mercadopago-status', { body: { id: paymentId } });
-        if (error) throw error;
-
-        const status = data?.payment?.status;
-        if (status === 'approved' || status === 'authorized') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
-
-          // Processar o pedido
-          const { data: processResult, error: processError } = await supabase.rpc('process_order_payment', {
-            p_order_id: orderId,
-            p_external_payment_id: paymentId,
-            p_external_payment_data: data.payment
-          });
-
-          if (processError || !processResult?.success) {
-            console.error('Erro ao processar pedido:', processError || processResult);
-            toast({ title: 'Erro', description: 'Falha ao processar pagamento', variant: 'destructive' });
-          } else {
-            toast({ title: 'Sucesso!', description: 'Pagamento aprovado via PIX.' });
-            setShowPixModal(false);
-            setTimeout(() => {
-              navigate(`/payment/success/${paymentId}`);
-            }, 800);
-          }
-        }
-      } catch (e) {
-        console.error('Erro no polling do PIX:', e);
-      }
-    }, 10000); // Reduzido para 10 segundos já que webhook é principal
-  };
 
   async function loadMpScript(): Promise<void> {
     if (window.Mercadopago || window.MercadoPago) return;
@@ -622,16 +631,15 @@ const Payment = () => {
           })
           .eq('id', orderData.order_id);
 
-        const qr = data.payment?.point_of_interaction?.transaction_data;
-        setPaymentId(data.payment?.id?.toString() || null);
-        setPixQrBase64(qr?.qr_code_base64 || null);
-        setPixCode(qr?.qr_code || null);
-        setShowPixModal(true);
-
-        // 4. Configurar polling como backup (webhook é principal)
-        if (data.payment?.id) startPixPolling(String(data.payment.id), orderData.order_id);
+        // 4. Redirecionar para página de sucesso PIX
+        console.log('✅ PIX criado com sucesso, redirecionando...');
         setProcessing(false);
-        return; // aguardará aprovação do PIX via webhook ou polling
+
+        setTimeout(() => {
+          navigate(`/payment/success/pix/${orderData.order_id}`);
+        }, 1000);
+
+        return;
       }
 
       if (paymentMethod === 'card') {
@@ -775,7 +783,7 @@ const Payment = () => {
         throw new Error(rejectionReason);
 
       } else if (paymentStatus === 'pending' || paymentStatus === 'in_process') {
-        // ⏳ EM ANÁLISE REAL
+        // ⏳ EM ANÁLISE - VERIFICAR MÚLTIPLAS VEZES
         console.log('⏳ Pagamento em análise:', { paymentStatus, paymentStatusDetail });
 
         // Verificar se é realmente análise ou erro de dados
@@ -794,12 +802,8 @@ const Payment = () => {
           throw new Error(rejectionReason);
         }
 
-        toast({
-          title: 'Pagamento em Análise',
-          description: 'Seu pagamento está sendo analisado. Acompanhe o status na seção Faturas.'
-        });
-
-        setTimeout(() => navigate(`/faturas?highlight=${orderData.order_id}`), 1500);
+        // Iniciar verificação múltipla para cartão
+        await handleCardAnalysis(data.payment?.id?.toString(), orderData.order_id);
 
       } else {
         // ❓ STATUS DESCONHECIDO - tratar como rejeitado
@@ -1435,7 +1439,7 @@ const Payment = () => {
                           {payingCard ? (
                             <div className="flex items-center space-x-2">
                               <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                              <span>Processando pagamento...</span>
+                              <span>Verificando pagamento...</span>
                             </div>
                           ) : (
                             <div className="flex items-center justify-center space-x-2">
@@ -1494,37 +1498,7 @@ const Payment = () => {
         </div>
       </main>
 
-      {/* PIX Modal */}
-      {showPixModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4">Pagamento PIX</h3>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                {pixQrBase64 ? (
-                  <img src={`data:image/png;base64,${pixQrBase64}`} alt="QR Code PIX" className="w-48 h-48 mx-auto" />
-                ) : (
-                  <QrCode className="w-32 h-32 mx-auto text-gray-600" />
-                )}
-              </div>
-              {pixCode && (
-                <div className="text-xs bg-gray-100 p-2 rounded mb-3 break-all">{pixCode}</div>
-              )}
-              <div className="space-y-2">
-                <Button className="w-full" onClick={() => navigator.clipboard.writeText(pixCode || '')}>
-                  <Copy className="w-4 h-4 mr-2" /> Copiar Código PIX
-                </Button>
-                <Button variant="outline" className="w-full" onClick={() => setShowPixModal(false)}>
-                  Cancelar
-                </Button>
-              </div>
-              {paymentId && (
-                <div className="text-[10px] text-gray-400 mt-2">Pagamento #{paymentId}</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+
 
 
     </div>

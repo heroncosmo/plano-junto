@@ -33,7 +33,6 @@ const AdicionarCreditos = () => {
   const [pixQrBase64, setPixQrBase64] = useState<string | null>(null);
   const [pixCode, setPixCode] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cartão state
   const [mpPublicKey, setMpPublicKey] = useState('');
@@ -79,31 +78,10 @@ const AdicionarCreditos = () => {
     };
     loadPublicKey();
 
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
+
   }, []);
 
-  const startPixPolling = (id: string, valorCentavosLiquido: number) => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
 
-    pollingRef.current = setInterval(async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('mercadopago-status', {
-          body: { id }
-        });
-        if (error) throw error;
-        const status = data?.payment?.status;
-        if (status === 'approved' || status === 'authorized') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
-          await processarCreditos(valorCentavosLiquido, id);
-          setShowPixModal(false);
-        }
-      } catch (e) {
-        console.error('Erro no polling do PIX:', e);
-      }
-    }, 3000);
-  };
 
   async function loadMpScript(): Promise<void> {
     if (window.Mercadopago || window.MercadoPago) return;
@@ -190,7 +168,7 @@ const AdicionarCreditos = () => {
         setPixCode(qr?.qr_code || null);
         setShowPixModal(true);
 
-        if (data.payment?.id) startPixPolling(String(data.payment.id), valorCentavos);
+        // Aguardar aprovação via webhook automático
         setLoading(false);
         return; // aguardar pagamento PIX
       }

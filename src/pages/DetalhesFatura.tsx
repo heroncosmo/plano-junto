@@ -54,7 +54,6 @@ export default function DetalhesFatura() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (id && user) {
@@ -177,70 +176,7 @@ export default function DetalhesFatura() {
     }
   };
 
-  const refreshOrder = async () => {
-    if (!id || !user || refreshing) return;
 
-    setRefreshing(true);
-
-    // Se for cartão em análise, verificar status no MercadoPago
-    if (order?.payment_method === 'credit_card' &&
-        order?.status === 'processing' &&
-        order?.external_payment_id) {
-
-      try {
-        console.log('🔄 Verificando status no MercadoPago...');
-
-        // Chamar edge function para verificar status
-        const { data: mpData, error: mpError } = await supabase.functions.invoke('mercadopago-status', {
-          body: { payment_id: order.external_payment_id }
-        });
-
-        if (!mpError && mpData?.payment) {
-          const mpStatus = mpData.payment.status;
-          console.log('📊 Status atual no MP:', mpStatus);
-
-          // Se status mudou, processar
-          if (mpStatus === 'approved' || mpStatus === 'authorized') {
-            console.log('✅ Pagamento aprovado! Processando...');
-
-            const { data: processResult, error: processError } = await supabase.rpc('process_order_payment', {
-              p_order_id: order.id,
-              p_external_payment_id: order.external_payment_id,
-              p_external_payment_data: mpData.payment
-            });
-
-            if (!processError && processResult?.success) {
-              toast({
-                title: "Pagamento Aprovado!",
-                description: "Seu pagamento foi aprovado! Bem-vindo ao grupo!",
-              });
-            }
-          } else if (mpStatus === 'rejected') {
-            console.log('❌ Pagamento rejeitado');
-
-            await supabase
-              .from('orders')
-              .update({
-                status: 'failed',
-                external_payment_data: mpData.payment
-              })
-              .eq('id', order.id);
-
-            toast({
-              title: "Pagamento Rejeitado",
-              description: "Seu pagamento foi rejeitado pelo banco",
-              variant: "destructive"
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao verificar status MP:', error);
-      }
-    }
-
-    // Recarregar dados atualizados
-    await loadOrder();
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
