@@ -23,7 +23,9 @@ const AdminDashboard = () => {
 
   // Payment credentials form state
   const [mpToken, setMpToken] = useState('');
+  const [mpPublicKey, setMpPublicKey] = useState('');
   const [savingToken, setSavingToken] = useState(false);
+  const [savingPublicKey, setSavingPublicKey] = useState(false);
 
   useEffect(() => {
     loadSystemStats();
@@ -74,6 +76,31 @@ const AdminDashboard = () => {
       toast({ title: 'Erro ao salvar', description: err?.message || 'Falha ao salvar credencial.', variant: 'destructive' });
     } finally {
       setSavingToken(false);
+    }
+  };
+
+  const handleSavePublicKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mpPublicKey || !mpPublicKey.startsWith('APP_')) {
+      toast({ title: 'Public Key inválida', description: 'Cole sua Public Key do Mercado Pago (ex: APP_USR-...)', variant: 'destructive' });
+      return;
+    }
+    try {
+      setSavingPublicKey(true);
+      // Salvar em settings via RPC simples (usando service role na função edge)
+      const { data, error } = await supabase.functions.invoke('admin-save-credential', {
+        body: { provider: 'mercadopago_public_key', token: mpPublicKey }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Public Key salva', description: 'Chave pública salva com sucesso.' });
+      setMpPublicKey('');
+    } catch (err: any) {
+      console.error('Erro ao salvar Public Key:', err);
+      toast({ title: 'Erro ao salvar', description: err?.message || 'Falha ao salvar Public Key.', variant: 'destructive' });
+    } finally {
+      setSavingPublicKey(false);
     }
   };
 
@@ -192,12 +219,36 @@ const AdminDashboard = () => {
 
               <div className="flex items-center gap-2">
                 <Button type="submit" disabled={savingToken}>
-                  {savingToken ? 'Salvando...' : 'Salvar Credencial'}
+                  {savingToken ? 'Salvando...' : 'Salvar Access Token'}
+                </Button>
+              </div>
+            </form>
+
+            <div className="h-px bg-gray-200 my-4" />
+
+            <form onSubmit={handleSavePublicKey} className="space-y-4">
+              <div>
+                <Label htmlFor="mpPublicKey" className="text-sm">Public Key (para cartão no frontend)</Label>
+                <Input
+                  id="mpPublicKey"
+                  placeholder="Cole aqui sua Public Key (APP_USR-...)"
+                  value={mpPublicKey}
+                  onChange={(e) => setMpPublicKey(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Chave pública, não sensível. Usada apenas para tokenização de cartão no navegador.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button type="submit" disabled={savingPublicKey}>
+                  {savingPublicKey ? 'Salvando...' : 'Salvar Public Key'}
                 </Button>
               </div>
 
               <div className="text-[11px] text-gray-500">
-                Segurança: armazenado criptografado no banco (RLS ativa), gravado via função segura e acessado apenas por funções server-side.
+                O Access Token é confidencial (server-side). A Public Key é usada no cliente para tokenizar cartões.
               </div>
             </form>
           </CardContent>
