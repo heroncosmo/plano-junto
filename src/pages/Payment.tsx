@@ -225,7 +225,12 @@ const Payment = () => {
             externalReference: `GROUP_${group.id}_${Date.now()}`,
           },
         });
-        if (error || data?.error || !data?.success) throw new Error(error?.message || data?.error || 'Falha ao criar PIX');
+        if (error || data?.error || !data?.success) {
+          console.error('PIX create error:', error || data);
+          const detail = data?.mpError?.message || data?.mpError?.error || data?.error || error?.message || 'Erro desconhecido';
+          toast({ title: 'Erro ao criar PIX', description: String(detail), variant: 'destructive' });
+          throw new Error('Falha ao criar PIX');
+        }
 
         const qr = data.payment?.point_of_interaction?.transaction_data;
         setPaymentId(data.payment?.id?.toString() || null);
