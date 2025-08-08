@@ -37,7 +37,8 @@ import {
   X,
   AlertTriangle,
   Trash2,
-  Copy
+  Copy,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useGroupById, useGroups, formatPrice, formatCategory } from '@/hooks/useGroups';
@@ -45,6 +46,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/hooks/useNotifications';
 import { CancellationModal } from '@/components/CancellationModal';
 import { useComplaintCheck } from '@/hooks/useComplaintCheck';
+
 
 // Interface para dados dos membros
 interface MemberData {
@@ -97,7 +99,7 @@ const GroupDetails = () => {
 
   const { group, loading, error, refetch } = useGroupById(id || '');
   const { groups: allGroups } = useGroups();
-  const { hasActiveComplaint, complaintId, complaintStatus, loading: complaintCheckLoading } = useComplaintCheck(id || '');
+  const { hasActiveComplaint, complaintId, complaintStatus, loading: complaintCheckLoading, refetch: refetchComplaint } = useComplaintCheck(id || '');
 
   // Carregar dados completos do grupo incluindo campos de aprovação
   useEffect(() => {
@@ -218,44 +220,53 @@ const GroupDetails = () => {
     loadAdminData();
   }, [groupData?.admin_id, user]);
 
-  // Verificar se o usuário é membro do grupo
-  useEffect(() => {
-    const checkUserMembership = async () => {
-      if (!id || !user?.id) return;
+  // Função para verificar membership
+  const checkUserMembership = async () => {
+    if (!id || !user?.id) return;
 
-      try {
-        const { data: membership, error } = await supabase
-          .from('group_memberships')
-          .select('*')
-          .eq('group_id', id)
-          .eq('user_id', user.id)
-          .eq('status', 'active')
-          .single();
+    try {
+      const { data: membership, error } = await supabase
+        .from('group_memberships')
+        .select('*')
+        .eq('group_id', id)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Erro ao verificar participação:', error);
-          return;
-        }
-
-        setIsGroupMember(!!membership);
-        setUserMembership(membership);
-      } catch (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Erro ao verificar participação:', error);
+        return;
       }
-    };
 
+      setIsGroupMember(!!membership);
+      setUserMembership(membership);
+    } catch (error) {
+      console.error('Erro ao verificar participação:', error);
+    }
+  };
+
+  // Verificar membership quando o componente carrega
+  useEffect(() => {
     checkUserMembership();
   }, [id, user?.id]);
 
-  // Recarregar dados quando a página for focada novamente
+  // Verificar membership e reclamações quando a página ganha foco
   useEffect(() => {
     const handleFocus = () => {
-      refetch();
+      // Aguardar um pouco e verificar novamente
+      setTimeout(() => {
+        checkUserMembership();
+        refetchComplaint();
+      }, 500);
     };
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [refetch]);
+  }, [id, user?.id]);
+
+  // Refresh automático removido para evitar recarregamentos desnecessários
+
+  // Função de refresh removida
 
   // Função para mostrar dados de contato
   const handleShowContact = (contact: {name: string, email?: string, phone?: string}) => {
@@ -500,9 +511,12 @@ const GroupDetails = () => {
                     </div>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="ml-3">
-                  <Share2 className="h-4 w-4 text-gray-500" />
-                </Button>
+                <div className="flex gap-2">
+                  {/* Botões de debug removidos */}
+                  <Button variant="ghost" size="icon" className="ml-3">
+                    <Share2 className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </div>
               </div>
               </div>
 

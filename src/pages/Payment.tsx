@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
@@ -23,6 +23,7 @@ import {
 import { useGroupById, formatPrice } from '@/hooks/useGroups';
 import { getUserProfile, processGroupPayment } from '@/integrations/supabase/functions';
 import { useToast } from '@/hooks/use-toast';
+import { createPixPayment, getPayment, type MPayer } from '@/integrations/mercadopago';
 
 type PaymentMethod = 'balance' | 'pix' | 'card';
 
@@ -40,6 +41,13 @@ const Payment = () => {
   const [processing, setProcessing] = useState(false);
   const [userBalance, setUserBalance] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(true);
+
+  // PIX state
+  const [showPixModal, setShowPixModal] = useState(false);
+  const [pixQrBase64, setPixQrBase64] = useState<string | null>(null);
+  const [pixCode, setPixCode] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const relationship = searchParams.get('relationship') || 'familia';
   const { group, loading, error } = useGroupById(id || '');
@@ -68,6 +76,10 @@ const Payment = () => {
     if (user) {
       loadUserBalance();
     }
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
   }, [user, toast]);
 
   const monthlyFee = group?.price_per_slot_cents || 6750; // R$ 67,50
@@ -82,20 +94,78 @@ const Payment = () => {
     }
   };
 
+  const startPixPolling = (id: string) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+
+    pollingRef.current = setInterval(async () => {
+      try {
+        const resp = await getPayment(id);
+        const status = resp?.payment?.status;
+        if (status === 'approved' || status === 'authorized') {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+
+          // Quando aprovado no MP, efetivar no banco
+          const result = await processGroupPayment(
+            group!.id,
+            monthlyFee,
+            'pix'
+          );
+
+          if (result.success) {
+            toast({ title: 'Sucesso!', description: 'Pagamento aprovado via PIX.' });
+            setShowPixModal(false);
+            setTimeout(() => {
+              navigate(`/payment/success/${id}`);
+            }, 800);
+          } else {
+            toast({ title: 'Erro', description: result.error || 'Falha ao registrar pagamento', variant: 'destructive' });
+          }
+        }
+      } catch (e) {
+        console.error('Erro no polling do PIX:', e);
+      }
+    }, 3000);
+  };
+
   const handlePayment = async () => {
     if (!group || !user) return;
-    
     setProcessing(true);
-    
+
     try {
+      if (paymentMethod === 'pix') {
+        // Criar cobrança PIX no valor da primeira mensalidade
+        const payer: MPayer = {
+          email: user.email || 'user@example.com',
+          first_name: user.user_metadata?.full_name || 'Usuario',
+          last_name: 'JuntaPlay',
+        };
+
+        const pixResp = await createPixPayment({
+          amountCents: monthlyFee, // cobrando apenas a mensalidade; caução é tratada no backend
+          description: `Assinatura do grupo ${group.name}`,
+          payer,
+          externalReference: `GROUP_${group.id}_${Date.now()}`,
+        });
+
+        if (!pixResp.success || !pixResp.payment) {
+          throw new Error(pixResp.error || 'Falha ao criar PIX');
+        }
+
+        const qr = pixResp.payment?.point_of_interaction?.transaction_data;
+        setPaymentId(pixResp.payment?.id?.toString() || null);
+        setPixQrBase64(qr?.qr_code_base64 || null);
+        setPixCode(qr?.qr_code || null);
+        setShowPixModal(true);
+
+        if (pixResp.payment?.id) startPixPolling(String(pixResp.payment.id));
+        setProcessing(false);
+        return; // aguardará aprovação do PIX
+      }
+
       let paymentMethodParam: 'credits' | 'pix' | 'credit_card' | 'debit_card';
-      
       switch (paymentMethod) {
         case 'balance':
           paymentMethodParam = 'credits';
-          break;
-        case 'pix':
-          paymentMethodParam = 'pix';
           break;
         case 'card':
           paymentMethodParam = 'credit_card';
@@ -111,25 +181,16 @@ const Payment = () => {
       );
 
       if (result.success) {
-        toast({
-          title: "Sucesso!",
-          description: "Pagamento processado com sucesso!",
-        });
-        navigate(`/payment/success/${id}`);
+        toast({ title: 'Sucesso!', description: 'Pagamento processado com sucesso!' });
+        setTimeout(() => {
+          navigate(`/payment/success/${id}`);
+        }, 1000);
       } else {
-        toast({
-          title: "Erro",
-          description: result.error || "Erro ao processar pagamento",
-          variant: "destructive",
-        });
+        toast({ title: 'Erro', description: result.error || 'Erro ao processar pagamento', variant: 'destructive' });
       }
     } catch (error) {
       console.error('Erro no pagamento:', error);
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao processar pagamento",
-        variant: "destructive",
-      });
+      toast({ title: 'Erro', description: 'Erro inesperado ao processar pagamento', variant: 'destructive' });
     } finally {
       setProcessing(false);
     }
@@ -329,43 +390,48 @@ const Payment = () => {
         </div>
       </main>
 
-      {/* PIX QR Code Modal */}
-      {showPixQr && (
+      {/* PIX Modal */}
+      {showPixModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-4">Pagamento PIX</h3>
               <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <QrCode className="w-32 h-32 mx-auto text-gray-600" />
+                {pixQrBase64 ? (
+                  <img src={`data:image/png;base64,${pixQrBase64}`} alt="QR Code PIX" className="w-48 h-48 mx-auto" />
+                ) : (
+                  <QrCode className="w-32 h-32 mx-auto text-gray-600" />
+                )}
               </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Escaneie o QR Code com seu app bancário
-              </p>
+              {pixCode && (
+                <div className="text-xs bg-gray-100 p-2 rounded mb-3 break-all">{pixCode}</div>
+              )}
               <div className="space-y-2">
-                <Button className="w-full" onClick={() => setShowPixQr(false)}>
-                  Copiar Código PIX
+                <Button className="w-full" onClick={() => navigator.clipboard.writeText(pixCode || '')}>
+                  <Copy className="w-4 h-4 mr-2" /> Copiar Código PIX
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => setShowPixQr(false)}>
+                <Button variant="outline" className="w-full" onClick={() => setShowPixModal(false)}>
                   Cancelar
                 </Button>
               </div>
+              {paymentId && (
+                <div className="text-[10px] text-gray-400 mt-2">Pagamento #{paymentId}</div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Credit Card Form Modal */}
+      {/* Credit Card Form Modal (placeholder) */}
       {showCardForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Cartão de Crédito</h3>
-              
               <div>
                 <Label htmlFor="cardNumber">Número do Cartão</Label>
                 <Input id="cardNumber" placeholder="0000 0000 0000 0000" />
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="expiry">Validade</Label>
@@ -376,12 +442,10 @@ const Payment = () => {
                   <Input id="cvv" placeholder="123" />
                 </div>
               </div>
-              
               <div>
                 <Label htmlFor="cardName">Nome no Cartão</Label>
                 <Input id="cardName" placeholder="Nome como está no cartão" />
               </div>
-              
               <div className="flex space-x-2">
                 <Button className="flex-1" onClick={() => setShowCardForm(false)}>
                   Pagar {formatPrice(total * quantity + cardFee)}

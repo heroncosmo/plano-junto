@@ -257,16 +257,14 @@ export const useComplaints = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase
-        .from('complaints')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('group_id', groupId)
-        .in('status', ['pending', 'admin_responded', 'user_responded', 'intervention']);
+      const { data, error } = await supabase.rpc('can_user_create_complaint', {
+        p_user_id: user.id,
+        p_group_id: groupId
+      });
 
       if (error) throw error;
 
-      return !data || data.length === 0;
+      return data?.can_create || false;
     } catch (err) {
       console.error('Erro ao verificar permissão:', err);
       return false;

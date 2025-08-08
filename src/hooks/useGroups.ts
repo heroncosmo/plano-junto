@@ -125,6 +125,8 @@ export const useGroupById = (groupId: string) => {
     fetchGroup();
   }, [groupId]);
 
+  // Refresh automático removido para evitar loops
+
   return { group, loading, error, refetch: fetchGroup };
 };
 

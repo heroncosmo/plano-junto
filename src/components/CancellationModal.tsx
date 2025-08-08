@@ -115,6 +115,10 @@ export const CancellationModal: React.FC<CancellationModalProps> = ({
         const success = await confirmCancellation(cancellationId);
         if (success) {
           nextStep();
+          // Forçar refresh da página após cancelamento
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
         }
       }
     }

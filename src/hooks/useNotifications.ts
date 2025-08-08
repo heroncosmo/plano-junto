@@ -53,7 +53,6 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      console.log('Notificações carregadas:', data?.length || 0);
       setNotifications(data || []);
     } catch (err) {
       console.error('Erro ao carregar notificações:', err);
@@ -88,12 +87,7 @@ export const useNotifications = () => {
         unread_important_count
       });
 
-      console.log('Estatísticas calculadas:', {
-        total_notifications,
-        unread_count,
-        important_count,
-        unread_important_count
-      });
+      // Estatísticas calculadas silenciosamente
     } catch (err) {
       console.error('Erro ao carregar estatísticas de notificações:', err);
       // Em caso de erro, definir estatísticas padrão
@@ -469,19 +463,15 @@ export const useNotifications = () => {
     }
   };
 
-  // Carregar dados quando usuário mudar
+  // Carregar dados quando usuário mudar (APENAS UMA VEZ)
   useEffect(() => {
     if (user && !initialized) {
       const initializeNotifications = async () => {
         try {
-          console.log('Inicializando notificações para o usuário...');
-          
           // Apenas carregar notificações existentes - NÃO criar novas automaticamente
           await loadNotifications();
           await loadNotificationStats();
-          
-          console.log('Notificações carregadas com sucesso');
-          
+
           // Marcar como inicializado
           setInitialized(true);
         } catch (err) {
@@ -489,7 +479,7 @@ export const useNotifications = () => {
           setInitialized(true); // Marcar como inicializado mesmo com erro
         }
       };
-      
+
       initializeNotifications();
     } else if (!user) {
       setNotifications([]);
@@ -501,7 +491,7 @@ export const useNotifications = () => {
       });
       setInitialized(false);
     }
-  }, [user, initialized]);
+  }, [user]); // Removido 'initialized' da dependência para evitar loops
 
   // Função para recarregar notificações manualmente
   const refreshNotifications = async () => {
