@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { 
+import {
   ArrowLeft,
   CreditCard,
   QrCode,
@@ -18,7 +18,11 @@ import {
   Plus,
   Minus,
   Info,
-  Wallet
+  Wallet,
+  Shield,
+  Lock,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useGroupById, formatPrice } from '@/hooks/useGroups';
 import { getUserProfile, processGroupPayment } from '@/integrations/supabase/functions';
@@ -70,9 +74,113 @@ const Payment = () => {
   const [cvv, setCvv] = useState('');
   const [docNumber, setDocNumber] = useState(''); // CPF
   const [payingCard, setPayingCard] = useState(false);
+  const [cardBrand, setCardBrand] = useState<string>('');
+  const [cardErrors, setCardErrors] = useState<{[key: string]: string}>({});
 
   const relationship = searchParams.get('relationship') || 'familia';
   const { group, loading, error } = useGroupById(id || '');
+
+  // Função para detectar bandeira do cartão
+  const detectCardBrand = (number: string): string => {
+    const cleanNumber = number.replace(/\D/g, '');
+
+    if (/^4/.test(cleanNumber)) return 'visa';
+    if (/^5[1-5]/.test(cleanNumber)) return 'mastercard';
+    if (/^3[47]/.test(cleanNumber)) return 'amex';
+    if (/^6(?:011|5)/.test(cleanNumber)) return 'discover';
+    if (/^35(2[89]|[3-8][0-9])/.test(cleanNumber)) return 'jcb';
+    if (/^30[0-5]/.test(cleanNumber) || /^36/.test(cleanNumber) || /^38/.test(cleanNumber)) return 'diners';
+    if (/^60/.test(cleanNumber)) return 'hipercard';
+    if (/^606282/.test(cleanNumber)) return 'hipercard';
+    if (/^637/.test(cleanNumber)) return 'elo';
+    if (/^50/.test(cleanNumber)) return 'elo';
+
+    return '';
+  };
+
+  // Função para obter ícone da bandeira
+  const getCardBrandIcon = (brand: string) => {
+    const iconComponents: {[key: string]: JSX.Element} = {
+      visa: (
+        <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs font-bold flex items-center justify-center">
+          VISA
+        </div>
+      ),
+      mastercard: (
+        <div className="w-8 h-5 bg-red-500 rounded text-white text-xs font-bold flex items-center justify-center">
+          MC
+        </div>
+      ),
+      amex: (
+        <div className="w-8 h-5 bg-blue-500 rounded text-white text-xs font-bold flex items-center justify-center">
+          AMEX
+        </div>
+      ),
+      elo: (
+        <div className="w-8 h-5 bg-yellow-500 rounded text-white text-xs font-bold flex items-center justify-center">
+          ELO
+        </div>
+      ),
+      hipercard: (
+        <div className="w-8 h-5 bg-red-600 rounded text-white text-xs font-bold flex items-center justify-center">
+          HIPER
+        </div>
+      ),
+      diners: (
+        <div className="w-8 h-5 bg-gray-600 rounded text-white text-xs font-bold flex items-center justify-center">
+          DINERS
+        </div>
+      )
+    };
+    return iconComponents[brand] || (
+      <div className="w-8 h-5 bg-gray-400 rounded text-white text-xs font-bold flex items-center justify-center">
+        <CreditCard className="h-3 w-3" />
+      </div>
+    );
+  };
+
+  // Função para validar campo em tempo real
+  const validateField = (field: string, value: string): string => {
+    switch (field) {
+      case 'cardNumber':
+        const cleanNum = value.replace(/\D/g, '');
+        if (cleanNum.length < 13) return 'Número muito curto';
+        if (cleanNum.length > 19) return 'Número muito longo';
+        return '';
+
+      case 'cardName':
+        if (value.length < 2) return 'Nome muito curto';
+        if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(value)) return 'Apenas letras e espaços';
+        return '';
+
+      case 'expiry':
+        const [month, year] = value.split('/');
+        if (!month || !year) return 'Formato inválido';
+        const monthNum = parseInt(month);
+        if (monthNum < 1 || monthNum > 12) return 'Mês inválido';
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+        const yearNum = parseInt(year.length === 2 ? `20${year}` : year);
+        if (yearNum < currentYear || (yearNum === currentYear && monthNum < currentMonth)) {
+          return 'Cartão vencido';
+        }
+        return '';
+
+      case 'cvv':
+        if (value.length < 3) return 'CVV muito curto';
+        if (cardBrand === 'amex' && value.length !== 4) return 'Amex requer 4 dígitos';
+        if (cardBrand !== 'amex' && value.length !== 3) return 'Requer 3 dígitos';
+        return '';
+
+      case 'docNumber':
+        const cleanCpf = value.replace(/\D/g, '');
+        if (cleanCpf.length !== 11) return 'CPF deve ter 11 dígitos';
+        return '';
+
+      default:
+        return '';
+    }
+  };
 
   // Carregar saldo real do usuário
   useEffect(() => {
@@ -226,45 +334,107 @@ const Payment = () => {
       throw new Error('CPF inválido');
     }
 
-    const [expMonth, expYearShort] = (expiry || '').split('/').map(s => s.trim());
-    if (!expMonth || !expYearShort || expMonth.length !== 2 || expYearShort.length !== 2) {
+    const [expMonth, expYearInput] = (expiry || '').split('/').map(s => s.trim());
+    if (!expMonth || !expYearInput) {
       throw new Error('Validade inválida (use MM/AA)');
     }
 
-    const expYear = `20${expYearShort}`;
+    // Validar mês
+    if (expMonth.length !== 2 || parseInt(expMonth) < 1 || parseInt(expMonth) > 12) {
+      throw new Error('Mês inválido (use 01-12)');
+    }
+
+    // Validar ano - aceitar tanto AA quanto AAAA
+    let expYear: string;
+    if (expYearInput.length === 2) {
+      // Formato AA - assumir 20XX
+      expYear = `20${expYearInput}`;
+    } else if (expYearInput.length === 4) {
+      // Formato AAAA - usar diretamente
+      expYear = expYearInput;
+    } else {
+      throw new Error('Ano inválido (use AA ou AAAA)');
+    }
+
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
+    const yearNum = parseInt(expYear);
+    const monthNum = parseInt(expMonth);
 
-    if (parseInt(expYear) < currentYear ||
-        (parseInt(expYear) === currentYear && parseInt(expMonth) < currentMonth)) {
+    // Validar se o ano é razoável (entre ano atual e +20 anos)
+    if (yearNum < currentYear || yearNum > currentYear + 20) {
+      throw new Error('Ano de validade inválido');
+    }
+
+    // Verificar se não está vencido
+    if (yearNum < currentYear || (yearNum === currentYear && monthNum < currentMonth)) {
       throw new Error('Cartão vencido');
     }
 
-    console.log('Criando token com dados:', {
-      cardNumber: cardNumber.replace(/\s+/g, '').substring(0, 6) + '...',
-      cardholderName: cardName,
+    // Preparar dados para o MercadoPago
+    const tokenData = {
+      cardNumber: cardNumber.replace(/\s+/g, ''),
+      cardholderName: cardName.trim(),
+      securityCode: cvv,
+      identificationType: 'CPF',
+      identificationNumber: docNumber.replace(/\D/g, ''),
       expirationMonth: expMonth,
       expirationYear: expYear,
-      identificationType: 'CPF',
-      identificationNumber: docNumber.replace(/\D/g, '').substring(0, 3) + '...'
+    };
+
+    console.log('Criando token com dados:', {
+      cardNumber: tokenData.cardNumber.substring(0, 6) + '...',
+      cardholderName: tokenData.cardholderName,
+      expirationMonth: tokenData.expirationMonth,
+      expirationYear: tokenData.expirationYear,
+      identificationType: tokenData.identificationType,
+      identificationNumber: tokenData.identificationNumber.substring(0, 3) + '...',
+      securityCode: '***'
     });
 
+    // Validações finais antes de enviar
+    if (tokenData.cardNumber.length < 13 || tokenData.cardNumber.length > 19) {
+      throw new Error('Número do cartão deve ter entre 13 e 19 dígitos');
+    }
+    if (tokenData.identificationNumber.length !== 11) {
+      throw new Error('CPF deve ter 11 dígitos');
+    }
+    if (tokenData.securityCode.length < 3 || tokenData.securityCode.length > 4) {
+      throw new Error('CVV deve ter 3 ou 4 dígitos');
+    }
+
     return new Promise<string>((resolve, reject) => {
-      window.Mercadopago.createToken({
-        cardNumber: cardNumber.replace(/\s+/g, ''),
-        cardholderName: cardName.trim(),
-        securityCode: cvv,
-        identificationType: 'CPF',
-        identificationNumber: docNumber.replace(/\D/g, ''),
-        expirationMonth: expMonth,
-        expirationYear: expYear,
-      }, (status: number, response: any) => {
+      window.Mercadopago.createToken(tokenData, (status: number, response: any) => {
         console.log('MercadoPago token response:', { status, response });
         if (status === 200 || status === 201) {
           resolve(response.id);
         } else {
           console.error('Erro ao criar token:', response);
-          reject(new Error(response?.message || response?.cause?.[0]?.description || 'Falha ao tokenizar cartão'));
+
+          // Extrair mensagem de erro mais específica
+          let errorMessage = 'Falha ao tokenizar cartão';
+
+          if (response?.cause && Array.isArray(response.cause)) {
+            const causes = response.cause.map((c: any) => c.description || c.message).filter(Boolean);
+            if (causes.length > 0) {
+              errorMessage = causes.join(', ');
+            }
+          } else if (response?.message) {
+            errorMessage = response.message;
+          }
+
+          // Traduzir erros comuns
+          if (errorMessage.includes('invalid parameters')) {
+            errorMessage = 'Dados do cartão inválidos. Verifique número, validade, CVV e CPF.';
+          } else if (errorMessage.includes('invalid card number')) {
+            errorMessage = 'Número do cartão inválido';
+          } else if (errorMessage.includes('invalid expiration')) {
+            errorMessage = 'Data de validade inválida';
+          } else if (errorMessage.includes('invalid security code')) {
+            errorMessage = 'CVV inválido';
+          }
+
+          reject(new Error(errorMessage));
         }
       });
     });
@@ -722,67 +892,285 @@ const Payment = () => {
           <div className="space-y-4">
             {paymentMethod === 'card' ? (
               <>
-                <div className="flex items-center space-x-2">
-                  <CreditCard className="h-5 w-5 text-cyan-600" />
-                  <h2 className="text-xl font-semibold text-gray-900">Dados do Cartão</h2>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg">
+                      <CreditCard className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">Dados do Cartão</h2>
+                      <p className="text-sm text-gray-500">Informações seguras e criptografadas</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1 text-green-600">
+                    <Shield className="h-4 w-4" />
+                    <span className="text-xs font-medium">SSL</span>
+                  </div>
                 </div>
 
-                <Card className="border-t-4 border-t-cyan-500">
-                  <CardContent className="p-6 space-y-4">
+                <Card className="border border-gray-200 shadow-xl bg-gradient-to-br from-white via-gray-50 to-white backdrop-blur-sm">
+                  <CardContent className="p-8 space-y-6">
+                    {/* Progress Indicator */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                        <span>Progresso do preenchimento</span>
+                        <span>{Math.round(((cardNumber ? 1 : 0) + (cardName ? 1 : 0) + (expiry ? 1 : 0) + (cvv ? 1 : 0) + (docNumber ? 1 : 0)) / 5 * 100)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div
+                          className="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${((cardNumber ? 1 : 0) + (cardName ? 1 : 0) + (expiry ? 1 : 0) + (cvv ? 1 : 0) + (docNumber ? 1 : 0)) / 5 * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Card Preview */}
+                    <div className="bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-xl p-6 text-white relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 rounded-full -translate-y-16 translate-x-16"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/20 to-pink-500/20 rounded-full translate-y-12 -translate-x-12"></div>
+
+                      <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-8">
+                          <div className="w-12 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded"></div>
+                          {cardBrand && (
+                            <div className="scale-125">
+                              {getCardBrandIcon(cardBrand)}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="font-mono text-lg tracking-wider">
+                            {cardNumber || '•••• •••• •••• ••••'}
+                          </div>
+
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <div className="text-xs text-gray-400 uppercase tracking-wide">Nome do Portador</div>
+                              <div className="font-medium">
+                                {cardName || 'SEU NOME AQUI'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-400 uppercase tracking-wide">Validade</div>
+                              <div className="font-mono">
+                                {expiry || 'MM/AA'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <div className="space-y-4">
                       {/* Card Number */}
-                      <div>
-                        <Label htmlFor="cardNumber">Número do Cartão</Label>
-                        <Input
-                          id="cardNumber"
-                          placeholder="0000 0000 0000 0000"
-                          value={cardNumber}
-                          onChange={e => setCardNumber(e.target.value)}
-                        />
+                      <div className="space-y-2">
+                        <Label htmlFor="cardNumber" className="text-sm font-medium text-gray-700">
+                          Número do Cartão
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="cardNumber"
+                            placeholder="0000 0000 0000 0000"
+                            value={cardNumber}
+                            onChange={e => {
+                              // Remover tudo que não é número
+                              const numbers = e.target.value.replace(/\D/g, '');
+                              // Limitar a 19 dígitos
+                              const limited = numbers.substring(0, 19);
+                              // Formatar com espaços a cada 4 dígitos
+                              const formatted = limited.replace(/(\d{4})(?=\d)/g, '$1 ');
+                              setCardNumber(formatted);
+
+                              // Detectar bandeira
+                              const brand = detectCardBrand(limited);
+                              setCardBrand(brand);
+
+                              // Validar em tempo real
+                              const error = validateField('cardNumber', limited);
+                              setCardErrors(prev => ({ ...prev, cardNumber: error }));
+                            }}
+                            maxLength={23} // 19 dígitos + 4 espaços
+                            className={`pr-12 ${cardErrors.cardNumber ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-cyan-500'} transition-colors`}
+                          />
+                          {/* Ícone da bandeira */}
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                            {cardBrand && (
+                              <div className="flex items-center space-x-1">
+                                {getCardBrandIcon(cardBrand)}
+                              </div>
+                            )}
+                            {!cardErrors.cardNumber && cardNumber.length > 0 && !cardBrand && (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            )}
+                          </div>
+                        </div>
+                        {cardErrors.cardNumber && (
+                          <div className="flex items-center space-x-1 text-red-600">
+                            <AlertCircle className="h-3 w-3" />
+                            <span className="text-xs">{cardErrors.cardNumber}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Card Name */}
-                      <div>
-                        <Label htmlFor="cardName">Nome no Cartão</Label>
-                        <Input
-                          id="cardName"
-                          placeholder="Nome como está no cartão"
-                          value={cardName}
-                          onChange={e => setCardName(e.target.value)}
-                        />
+                      <div className="space-y-2">
+                        <Label htmlFor="cardName" className="text-sm font-medium text-gray-700">
+                          Nome no Cartão
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="cardName"
+                            placeholder="Nome como está no cartão"
+                            value={cardName}
+                            onChange={e => {
+                              const value = e.target.value.toUpperCase();
+                              setCardName(value);
+
+                              // Validar em tempo real
+                              const error = validateField('cardName', value);
+                              setCardErrors(prev => ({ ...prev, cardName: error }));
+                            }}
+                            className={`${cardErrors.cardName ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-cyan-500'} transition-colors`}
+                          />
+                          {!cardErrors.cardName && cardName.length > 0 && (
+                            <CheckCircle2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                        {cardErrors.cardName && (
+                          <div className="flex items-center space-x-1 text-red-600">
+                            <AlertCircle className="h-3 w-3" />
+                            <span className="text-xs">{cardErrors.cardName}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Expiry and CVV */}
                       <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="expiry">Validade</Label>
-                          <Input
-                            id="expiry"
-                            placeholder="MM/AA"
-                            value={expiry}
-                            onChange={e => setExpiry(e.target.value)}
-                          />
+                        <div className="space-y-2">
+                          <Label htmlFor="expiry" className="text-sm font-medium text-gray-700">
+                            Validade
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="expiry"
+                              placeholder="MM/AA"
+                              value={expiry}
+                              onChange={e => {
+                                // Remover tudo que não é número
+                                const numbers = e.target.value.replace(/\D/g, '');
+                                // Limitar a 4 dígitos
+                                const limited = numbers.substring(0, 4);
+                                // Formatar MM/AA
+                                let formatted = limited;
+                                if (limited.length >= 2) {
+                                  formatted = limited.substring(0, 2) + '/' + limited.substring(2);
+                                }
+                                setExpiry(formatted);
+
+                                // Validar em tempo real
+                                const error = validateField('expiry', formatted);
+                                setCardErrors(prev => ({ ...prev, expiry: error }));
+                              }}
+                              maxLength={5} // MM/AA
+                              className={`${cardErrors.expiry ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-cyan-500'} transition-colors`}
+                            />
+                            {!cardErrors.expiry && expiry.length === 5 && (
+                              <CheckCircle2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                            )}
+                          </div>
+                          {cardErrors.expiry && (
+                            <div className="flex items-center space-x-1 text-red-600">
+                              <AlertCircle className="h-3 w-3" />
+                              <span className="text-xs">{cardErrors.expiry}</span>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <Label htmlFor="cvv">CVV</Label>
-                          <Input
-                            id="cvv"
-                            placeholder="000"
-                            value={cvv}
-                            onChange={e => setCvv(e.target.value)}
-                          />
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-1">
+                            <Label htmlFor="cvv" className="text-sm font-medium text-gray-700">
+                              CVV
+                            </Label>
+                            <div className="group relative">
+                              <HelpCircle className="h-3 w-3 text-gray-400 cursor-help" />
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                3 dígitos no verso (4 para Amex)
+                              </div>
+                            </div>
+                          </div>
+                          <div className="relative">
+                            <Input
+                              id="cvv"
+                              placeholder={cardBrand === 'amex' ? '0000' : '000'}
+                              value={cvv}
+                              onChange={e => {
+                                // Apenas números, máximo 4 dígitos
+                                const numbers = e.target.value.replace(/\D/g, '').substring(0, 4);
+                                setCvv(numbers);
+
+                                // Validar em tempo real
+                                const error = validateField('cvv', numbers);
+                                setCardErrors(prev => ({ ...prev, cvv: error }));
+                              }}
+                              maxLength={4}
+                              type="password"
+                              className={`${cardErrors.cvv ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-cyan-500'} transition-colors`}
+                            />
+                            <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          </div>
+                          {cardErrors.cvv && (
+                            <div className="flex items-center space-x-1 text-red-600">
+                              <AlertCircle className="h-3 w-3" />
+                              <span className="text-xs">{cardErrors.cvv}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       {/* CPF */}
-                      <div>
-                        <Label htmlFor="cpf">CPF</Label>
-                        <Input
-                          id="cpf"
-                          placeholder="000.000.000-00"
-                          value={docNumber}
-                          onChange={e => setDocNumber(e.target.value)}
-                        />
+                      <div className="space-y-2">
+                        <Label htmlFor="cpf" className="text-sm font-medium text-gray-700">
+                          CPF do Portador
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="cpf"
+                            placeholder="000.000.000-00"
+                            value={docNumber}
+                            onChange={e => {
+                              // Remover tudo que não é número
+                              const numbers = e.target.value.replace(/\D/g, '');
+                              // Limitar a 11 dígitos
+                              const limited = numbers.substring(0, 11);
+                              // Formatar CPF: 000.000.000-00
+                              let formatted = limited;
+                              if (limited.length > 3) {
+                                formatted = limited.substring(0, 3) + '.' + limited.substring(3);
+                              }
+                              if (limited.length > 6) {
+                                formatted = limited.substring(0, 3) + '.' + limited.substring(3, 6) + '.' + limited.substring(6);
+                              }
+                              if (limited.length > 9) {
+                                formatted = limited.substring(0, 3) + '.' + limited.substring(3, 6) + '.' + limited.substring(6, 9) + '-' + limited.substring(9);
+                              }
+                              setDocNumber(formatted);
+
+                              // Validar em tempo real
+                              const error = validateField('docNumber', formatted);
+                              setCardErrors(prev => ({ ...prev, docNumber: error }));
+                            }}
+                            maxLength={14} // 000.000.000-00
+                            className={`${cardErrors.docNumber ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-cyan-500'} transition-colors`}
+                          />
+                          {!cardErrors.docNumber && docNumber.length === 14 && (
+                            <CheckCircle2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                        {cardErrors.docNumber && (
+                          <div className="flex items-center space-x-1 text-red-600">
+                            <AlertCircle className="h-3 w-3" />
+                            <span className="text-xs">{cardErrors.docNumber}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Coupon */}
@@ -794,48 +1182,88 @@ const Payment = () => {
                       </div>
 
                       {/* Payment Summary for Card */}
-                      <div className="bg-gray-50 p-4 rounded-lg border">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Subtotal:</span>
-                            <span className="font-medium">{formatPrice(total * quantity)}</span>
+                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                            <span>Resumo do Pagamento</span>
+                            <Shield className="h-4 w-4 text-green-500" />
+                          </h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Subtotal:</span>
+                              <span className="font-medium">{formatPrice(total * quantity)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Taxa do cartão:</span>
+                              <span className="text-amber-600">+ {formatPrice(cardFee)}</span>
+                            </div>
+                            <div className="border-t border-gray-300 pt-2">
+                              <div className="flex justify-between font-semibold text-lg">
+                                <span className="text-gray-900">Total:</span>
+                                <span className="text-cyan-600">{formatPrice(total * quantity + cardFee)}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Taxa do cartão:</span>
-                            <span className="text-red-600">+ {formatPrice(cardFee)}</span>
-                          </div>
-                          <div className="flex justify-between font-semibold text-base border-t pt-2">
-                            <span>Total:</span>
-                            <span className="text-cyan-600">{formatPrice(total * quantity + cardFee)}</span>
-                          </div>
+                        </div>
+                      </div>
+
+                      {/* Security Notice */}
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 text-green-800">
+                          <Lock className="h-4 w-4" />
+                          <span className="text-xs font-medium">
+                            Seus dados estão protegidos com criptografia SSL de 256 bits
+                          </span>
                         </div>
                       </div>
 
                       {/* Payment Button */}
                       <div className="pt-2">
                         <Button
-                          className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-semibold py-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all"
+                          className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                           onClick={handlePayCard}
-                          disabled={payingCard || !mpPublicKey}
+                          disabled={payingCard || !mpPublicKey || Object.values(cardErrors).some(error => error !== '')}
                         >
                           {payingCard ? (
                             <div className="flex items-center space-x-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                               <span>Processando pagamento...</span>
                             </div>
                           ) : (
                             <div className="flex items-center justify-center space-x-2">
-                              <CreditCard className="h-4 w-4" />
-                              <span>Finalizar Pagamento</span>
+                              <Lock className="h-5 w-5" />
+                              <span>Finalizar Pagamento Seguro</span>
+                              <span className="text-lg">→</span>
                             </div>
                           )}
                         </Button>
 
                         {!mpPublicKey && (
-                          <p className="text-xs text-red-600 text-center mt-2">
-                            Cartão indisponível: configure a chave pública no painel administrativo
-                          </p>
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+                            <div className="flex items-center space-x-2 text-red-800">
+                              <AlertCircle className="h-4 w-4" />
+                              <span className="text-xs">
+                                Cartão indisponível: configure a chave pública no painel administrativo
+                              </span>
+                            </div>
+                          </div>
                         )}
+
+                        {/* Trust indicators */}
+                        <div className="flex items-center justify-center space-x-4 mt-4 text-xs text-gray-500">
+                          <div className="flex items-center space-x-1">
+                            <Shield className="h-3 w-3" />
+                            <span>SSL</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Lock className="h-3 w-3" />
+                            <span>Criptografado</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>Seguro</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
