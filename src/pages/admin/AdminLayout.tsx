@@ -70,8 +70,16 @@ const AdminLayout = () => {
 
   return (
     <>
+      {/* Escopo CSS: padroniza ciano -> azul oficial e sutilezas minimalistas no admin */}
+      <style>{`
+        .admin-wrapper .border-cyan-600 { border-color: #2563eb !important; }
+        .admin-wrapper .text-cyan-600 { color: #2563eb !important; }
+        .admin-wrapper .bg-cyan-100 { background-color: #dbeafe !important; }
+        .admin-wrapper .bg-cyan-50 { background-color: #eff6ff !important; }
+      `}</style>
+
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+      <div className="admin-wrapper min-h-screen bg-white p-4 text-[13px]">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -89,13 +97,13 @@ const AdminLayout = () => {
                 <p className="text-sm text-gray-600">Gerencie o sistema JuntaPlay</p>
               </div>
             </div>
-            <Badge variant="outline" className="bg-green-50 text-green-700">
+            <Badge variant="outline" className="rounded-full px-3 py-1 text-xs bg-gray-50 text-gray-700">
               Admin
             </Badge>
           </div>
 
           {/* Navigation Menu */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -103,13 +111,13 @@ const AdminLayout = () => {
               return (
                 <Card 
                   key={item.path}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    isActive ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                  }`}
+                  className={`cursor-pointer transition-all border ${
+                    isActive ? 'border-blue-500' : 'border-gray-200'
+                  } hover:bg-gray-50`}
                   onClick={() => navigate(item.path)}
                 >
-                  <CardContent className="p-4 text-center">
-                    <Icon className={`h-8 w-8 mx-auto mb-2 ${
+                  <CardContent className="p-3 text-center">
+                    <Icon className={`h-6 w-6 mx-auto mb-1 ${
                       isActive ? 'text-blue-600' : 'text-gray-600'
                     }`} />
                     <h3 className={`font-semibold text-sm ${
@@ -117,7 +125,7 @@ const AdminLayout = () => {
                     }`}>
                       {item.label}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-0.5">
                       {item.description}
                     </p>
                   </CardContent>
@@ -127,7 +135,7 @@ const AdminLayout = () => {
           </div>
 
           {/* Content Area */}
-          <div className="bg-white rounded-lg shadow-sm border">
+          <div className="bg-white rounded-lg border">
             <Outlet />
           </div>
         </div>
