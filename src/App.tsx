@@ -15,6 +15,7 @@ import GroupDetails from "./pages/GroupDetails";
 import JoinGroup from "./pages/JoinGroup";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentPending from "./pages/PaymentPending";
 import LoyaltyGroup from "./pages/LoyaltyGroup";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -146,6 +147,11 @@ const AppRouter = () => {
               <Route path="/payment/success/:id" element={
                 <RequireAuth>
                   <PaymentSuccess />
+                </RequireAuth>
+              } />
+              <Route path="/payment/pending/:paymentId" element={
+                <RequireAuth>
+                  <PaymentPending />
                 </RequireAuth>
               } />
               

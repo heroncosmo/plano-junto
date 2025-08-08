@@ -127,38 +127,70 @@ const Payment = () => {
     }
   };
 
-  const startPixPolling = async (id: string) => {
+  const startPixPolling = async (paymentId: string, orderId: string) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
 
     pollingRef.current = setInterval(async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('mercadopago-status', { body: { id } });
+        // Verificar status do pedido no banco (pode ter sido processado por webhook ou cron)
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .single();
+
+        if (orderError) {
+          console.error('Erro ao verificar pedido:', orderError);
+          return;
+        }
+
+        if (orderData.status === 'paid') {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          toast({ title: 'Sucesso!', description: 'Pagamento aprovado via PIX.' });
+          setShowPixModal(false);
+          setTimeout(() => {
+            navigate(`/payment/success/${paymentId}`);
+          }, 800);
+          return;
+        }
+
+        if (orderData.status === 'failed' || orderData.status === 'expired') {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          toast({ title: 'Erro', description: 'Pagamento não foi aprovado ou expirou', variant: 'destructive' });
+          setShowPixModal(false);
+          return;
+        }
+
+        // Se ainda está pendente, verificar no MercadoPago também
+        const { data, error } = await supabase.functions.invoke('mercadopago-status', { body: { id: paymentId } });
         if (error) throw error;
+
         const status = data?.payment?.status;
         if (status === 'approved' || status === 'authorized') {
           if (pollingRef.current) clearInterval(pollingRef.current);
 
-          // Quando aprovado no MP, efetivar no banco
-          const result = await processGroupPayment(
-            group!.id,
-            monthlyFee,
-            'pix'
-          );
+          // Processar o pedido
+          const { data: processResult, error: processError } = await supabase.rpc('process_order_payment', {
+            p_order_id: orderId,
+            p_external_payment_id: paymentId,
+            p_external_payment_data: data.payment
+          });
 
-          if (result.success) {
+          if (processError || !processResult?.success) {
+            console.error('Erro ao processar pedido:', processError || processResult);
+            toast({ title: 'Erro', description: 'Falha ao processar pagamento', variant: 'destructive' });
+          } else {
             toast({ title: 'Sucesso!', description: 'Pagamento aprovado via PIX.' });
             setShowPixModal(false);
             setTimeout(() => {
-              navigate(`/payment/success/${id}`);
+              navigate(`/payment/success/${paymentId}`);
             }, 800);
-          } else {
-            toast({ title: 'Erro', description: result.error || 'Falha ao registrar pagamento', variant: 'destructive' });
           }
         }
       } catch (e) {
         console.error('Erro no polling do PIX:', e);
       }
-    }, 3000);
+    }, 10000); // Reduzido para 10 segundos já que webhook é principal
   };
 
   async function loadMpScript(): Promise<void> {
@@ -180,24 +212,59 @@ const Payment = () => {
     if (!window.Mercadopago) throw new Error('SDK Mercado Pago indisponível');
     window.Mercadopago.setPublishableKey(mpPublicKey);
 
+    // Validar campos obrigatórios
+    if (!cardNumber || cardNumber.replace(/\s+/g, '').length < 13) {
+      throw new Error('Número do cartão inválido');
+    }
+    if (!cardName || cardName.trim().length < 2) {
+      throw new Error('Nome no cartão é obrigatório');
+    }
+    if (!cvv || cvv.length < 3) {
+      throw new Error('CVV inválido');
+    }
+    if (!docNumber || docNumber.replace(/\D/g, '').length !== 11) {
+      throw new Error('CPF inválido');
+    }
+
     const [expMonth, expYearShort] = (expiry || '').split('/').map(s => s.trim());
-    if (!expMonth || !expYearShort) throw new Error('Validade inválida (use MM/AA)');
+    if (!expMonth || !expYearShort || expMonth.length !== 2 || expYearShort.length !== 2) {
+      throw new Error('Validade inválida (use MM/AA)');
+    }
+
     const expYear = `20${expYearShort}`;
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    if (parseInt(expYear) < currentYear ||
+        (parseInt(expYear) === currentYear && parseInt(expMonth) < currentMonth)) {
+      throw new Error('Cartão vencido');
+    }
+
+    console.log('Criando token com dados:', {
+      cardNumber: cardNumber.replace(/\s+/g, '').substring(0, 6) + '...',
+      cardholderName: cardName,
+      expirationMonth: expMonth,
+      expirationYear: expYear,
+      identificationType: 'CPF',
+      identificationNumber: docNumber.replace(/\D/g, '').substring(0, 3) + '...'
+    });
 
     return new Promise<string>((resolve, reject) => {
       window.Mercadopago.createToken({
         cardNumber: cardNumber.replace(/\s+/g, ''),
-        cardholderName: cardName,
+        cardholderName: cardName.trim(),
         securityCode: cvv,
         identificationType: 'CPF',
-        identificationNumber: (docNumber || '').replace(/\D/g, ''),
+        identificationNumber: docNumber.replace(/\D/g, ''),
         expirationMonth: expMonth,
         expirationYear: expYear,
       }, (status: number, response: any) => {
+        console.log('MercadoPago token response:', { status, response });
         if (status === 200 || status === 201) {
           resolve(response.id);
         } else {
-          reject(new Error(response?.message || 'Falha ao tokenizar cartão'));
+          console.error('Erro ao criar token:', response);
+          reject(new Error(response?.message || response?.cause?.[0]?.description || 'Falha ao tokenizar cartão'));
         }
       });
     });
@@ -209,7 +276,23 @@ const Payment = () => {
 
     try {
       if (paymentMethod === 'pix') {
-        // Criar cobrança PIX no valor da primeira mensalidade
+        // 1. Criar pedido no sistema
+        const { data: orderData, error: orderError } = await supabase.rpc('create_order', {
+          p_user_id: user.id,
+          p_group_id: group.id,
+          p_amount_cents: monthlyFee,
+          p_payment_method: 'pix',
+          p_relationship: searchParams.get('relationship') || 'familia',
+          p_quantity: quantity
+        });
+
+        if (orderError || !orderData?.success) {
+          console.error('Erro ao criar pedido:', orderError || orderData);
+          toast({ title: 'Erro', description: orderData?.error || 'Falha ao criar pedido', variant: 'destructive' });
+          throw new Error('Falha ao criar pedido');
+        }
+
+        // 2. Criar cobrança PIX no MercadoPago
         const payer: MPayer = {
           email: user.email || 'user@example.com',
           first_name: user.user_metadata?.full_name || 'Usuario',
@@ -222,9 +305,10 @@ const Payment = () => {
             amountCents: monthlyFee,
             description: `Assinatura do grupo ${group.name}`,
             payer,
-            externalReference: `GROUP_${group.id}_${Date.now()}`,
+            externalReference: `ORDER_${orderData.order_id}`,
           },
         });
+
         if (error || data?.error || !data?.success) {
           console.error('PIX create error:', error || data);
           const detail = data?.mpError?.message || data?.mpError?.error || data?.error || error?.message || 'Erro desconhecido';
@@ -232,15 +316,26 @@ const Payment = () => {
           throw new Error('Falha ao criar PIX');
         }
 
+        // 3. Atualizar pedido com ID do MercadoPago
+        await supabase
+          .from('orders')
+          .update({
+            external_payment_id: data.payment?.id?.toString(),
+            external_payment_data: data.payment,
+            status: 'processing'
+          })
+          .eq('id', orderData.order_id);
+
         const qr = data.payment?.point_of_interaction?.transaction_data;
         setPaymentId(data.payment?.id?.toString() || null);
         setPixQrBase64(qr?.qr_code_base64 || null);
         setPixCode(qr?.qr_code || null);
         setShowPixModal(true);
 
-        if (data.payment?.id) startPixPolling(String(data.payment.id));
+        // 4. Configurar polling como backup (webhook é principal)
+        if (data.payment?.id) startPixPolling(String(data.payment.id), orderData.order_id);
         setProcessing(false);
-        return; // aguardará aprovação do PIX
+        return; // aguardará aprovação do PIX via webhook ou polling
       }
 
       if (paymentMethod === 'card') {
@@ -249,28 +344,24 @@ const Payment = () => {
         return;
       }
 
-      let paymentMethodParam: 'credits' | 'pix' | 'credit_card' | 'debit_card';
-      switch (paymentMethod) {
-        case 'balance':
-          paymentMethodParam = 'credits';
-          break;
-        default:
-          paymentMethodParam = 'credits';
-      }
+      // Pagamento com saldo (créditos)
+      const { data: orderData, error: orderError } = await supabase.rpc('create_order', {
+        p_user_id: user.id,
+        p_group_id: group.id,
+        p_amount_cents: monthlyFee,
+        p_payment_method: 'credits',
+        p_relationship: searchParams.get('relationship') || 'familia',
+        p_quantity: quantity
+      });
 
-      const result = await processGroupPayment(
-        group.id,
-        monthlyFee,
-        paymentMethodParam
-      );
-
-      if (result.success) {
+      if (orderError || !orderData?.success) {
+        console.error('Erro ao criar pedido:', orderError || orderData);
+        toast({ title: 'Erro', description: orderData?.error || 'Falha ao processar pagamento', variant: 'destructive' });
+      } else {
         toast({ title: 'Sucesso!', description: 'Pagamento processado com sucesso!' });
         setTimeout(() => {
-          navigate(`/payment/success/${id}`);
+          navigate(`/payment/success/credits`);
         }, 1000);
-      } else {
-        toast({ title: 'Erro', description: result.error || 'Erro ao processar pagamento', variant: 'destructive' });
       }
     } catch (error) {
       console.error('Erro no pagamento:', error);
@@ -284,6 +375,24 @@ const Payment = () => {
     if (!group || !user) return;
     try {
       setPayingCard(true);
+
+      // 1. Criar pedido no sistema
+      const { data: orderData, error: orderError } = await supabase.rpc('create_order', {
+        p_user_id: user.id,
+        p_group_id: group.id,
+        p_amount_cents: monthlyFee,
+        p_payment_method: 'credit_card',
+        p_relationship: searchParams.get('relationship') || 'familia',
+        p_quantity: quantity
+      });
+
+      if (orderError || !orderData?.success) {
+        console.error('Erro ao criar pedido:', orderError || orderData);
+        toast({ title: 'Erro', description: orderData?.error || 'Falha ao criar pedido', variant: 'destructive' });
+        throw new Error('Falha ao criar pedido');
+      }
+
+      // 2. Criar token do cartão
       const token = await createCardToken();
 
       const payer = {
@@ -293,7 +402,7 @@ const Payment = () => {
         identification: { type: 'CPF', number: (docNumber || '').replace(/\D/g, '') },
       };
 
-      // Criar pagamento via Supabase Edge Function (independe de hospedagem)
+      // 3. Criar pagamento no MercadoPago
       const { data, error } = await supabase.functions.invoke('mercadopago-create', {
         body: {
           type: 'card',
@@ -302,18 +411,53 @@ const Payment = () => {
           payer,
           token,
           installments: 1,
-          externalReference: `GROUP_${group.id}_${Date.now()}`,
+          externalReference: `ORDER_${orderData.order_id}`,
         },
       });
-      if (error || data?.error || !data?.success) throw new Error(error?.message || data?.error || 'Falha ao criar pagamento com cartão');
 
-      const result = await processGroupPayment(group.id, monthlyFee, 'credit_card');
-      if (result.success) {
+      if (error || data?.error || !data?.success) {
+        console.error('Erro ao criar pagamento:', error || data);
+        throw new Error(error?.message || data?.error || 'Falha ao criar pagamento com cartão');
+      }
+
+      // 4. Atualizar pedido com dados do pagamento
+      await supabase
+        .from('orders')
+        .update({
+          external_payment_id: data.payment?.id?.toString(),
+          external_payment_data: data.payment,
+          status: 'processing'
+        })
+        .eq('id', orderData.order_id);
+
+      // 5. Verificar se foi aprovado imediatamente
+      const paymentStatus = data.payment?.status;
+      if (paymentStatus === 'approved' || paymentStatus === 'authorized') {
+        // Processar o pedido imediatamente
+        const { data: processResult, error: processError } = await supabase.rpc('process_order_payment', {
+          p_order_id: orderData.order_id,
+          p_external_payment_id: data.payment?.id?.toString(),
+          p_external_payment_data: data.payment
+        });
+
+        if (processError || !processResult?.success) {
+          throw new Error(processResult?.error || 'Falha ao processar pagamento');
+        }
+
         toast({ title: 'Sucesso!', description: 'Pagamento aprovado via Cartão.' });
-        // Card form is inline now, just navigate
-        setTimeout(() => navigate(`/payment/success/${id}`), 800);
+        setTimeout(() => navigate(`/payment/success/${data.payment?.id}`), 800);
+      } else if (paymentStatus === 'pending' || paymentStatus === 'in_process') {
+        // Pagamento em análise
+        toast({ title: 'Pagamento em análise', description: 'Seu pagamento está sendo processado. Você receberá uma notificação quando for aprovado.' });
+        setTimeout(() => navigate(`/payment/pending/${data.payment?.id}`), 800);
       } else {
-        throw new Error(result.error || 'Falha ao registrar pagamento');
+        // Pagamento rejeitado
+        await supabase
+          .from('orders')
+          .update({ status: 'failed' })
+          .eq('id', orderData.order_id);
+
+        throw new Error('Pagamento rejeitado pelo cartão');
       }
     } catch (e: any) {
       console.error('Erro no pagamento com cartão:', e);
