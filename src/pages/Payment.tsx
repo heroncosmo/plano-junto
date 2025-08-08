@@ -139,42 +139,45 @@ const Payment = () => {
     );
   };
 
-  // Função para validar campo em tempo real
+  // Função para validar campo em tempo real (menos restritiva)
   const validateField = (field: string, value: string): string => {
     switch (field) {
       case 'cardNumber':
         const cleanNum = value.replace(/\D/g, '');
-        if (cleanNum.length < 13) return 'Número muito curto';
+        if (cleanNum.length > 0 && cleanNum.length < 13) return 'Número muito curto';
         if (cleanNum.length > 19) return 'Número muito longo';
         return '';
 
       case 'cardName':
-        if (value.length < 2) return 'Nome muito curto';
-        if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(value)) return 'Apenas letras e espaços';
+        if (value.length > 0 && value.length < 2) return 'Nome muito curto';
+        if (value.length > 0 && !/^[a-zA-ZÀ-ÿ\s]+$/.test(value)) return 'Apenas letras e espaços';
         return '';
 
       case 'expiry':
+        if (value.length === 0) return '';
         const [month, year] = value.split('/');
-        if (!month || !year) return 'Formato inválido';
-        const monthNum = parseInt(month);
-        if (monthNum < 1 || monthNum > 12) return 'Mês inválido';
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth() + 1;
-        const yearNum = parseInt(year.length === 2 ? `20${year}` : year);
-        if (yearNum < currentYear || (yearNum === currentYear && monthNum < currentMonth)) {
-          return 'Cartão vencido';
+        if (value.length === 5) { // Só validar quando completo
+          if (!month || !year) return 'Formato inválido';
+          const monthNum = parseInt(month);
+          if (monthNum < 1 || monthNum > 12) return 'Mês inválido';
+          const currentYear = new Date().getFullYear();
+          const currentMonth = new Date().getMonth() + 1;
+          const yearNum = parseInt(year.length === 2 ? `20${year}` : year);
+          if (yearNum < currentYear || (yearNum === currentYear && monthNum < currentMonth)) {
+            return 'Cartão vencido';
+          }
         }
         return '';
 
       case 'cvv':
-        if (value.length < 3) return 'CVV muito curto';
-        if (cardBrand === 'amex' && value.length !== 4) return 'Amex requer 4 dígitos';
-        if (cardBrand !== 'amex' && value.length !== 3) return 'Requer 3 dígitos';
+        if (value.length > 0 && value.length < 3) return 'CVV muito curto';
+        if (cardBrand === 'amex' && value.length > 0 && value.length !== 4) return 'Amex requer 4 dígitos';
+        if (cardBrand !== 'amex' && value.length > 0 && value.length > 3) return 'Máximo 3 dígitos';
         return '';
 
       case 'docNumber':
         const cleanCpf = value.replace(/\D/g, '');
-        if (cleanCpf.length !== 11) return 'CPF deve ter 11 dígitos';
+        if (cleanCpf.length > 0 && cleanCpf.length !== 11) return 'CPF deve ter 11 dígitos';
         return '';
 
       default:
@@ -320,27 +323,35 @@ const Payment = () => {
     if (!window.Mercadopago) throw new Error('SDK Mercado Pago indisponível');
     window.Mercadopago.setPublishableKey(mpPublicKey);
 
-    // Validar campos obrigatórios
-    if (!cardNumber || cardNumber.replace(/\s+/g, '').length < 13) {
-      throw new Error('Número do cartão inválido');
+    // Validar campos obrigatórios com mensagens mais específicas
+    const cleanCardNumber = cardNumber.replace(/\s+/g, '');
+    if (!cleanCardNumber || cleanCardNumber.length < 13) {
+      throw new Error('Número do cartão deve ter pelo menos 13 dígitos');
     }
     if (!cardName || cardName.trim().length < 2) {
-      throw new Error('Nome no cartão é obrigatório');
+      throw new Error('Nome no cartão deve ter pelo menos 2 caracteres');
     }
     if (!cvv || cvv.length < 3) {
-      throw new Error('CVV inválido');
+      throw new Error('CVV deve ter pelo menos 3 dígitos');
     }
-    if (!docNumber || docNumber.replace(/\D/g, '').length !== 11) {
-      throw new Error('CPF inválido');
+    const cleanCpf = docNumber.replace(/\D/g, '');
+    if (!cleanCpf || cleanCpf.length !== 11) {
+      throw new Error('CPF deve ter exatamente 11 dígitos');
     }
 
-    const [expMonth, expYearInput] = (expiry || '').split('/').map(s => s.trim());
+    // Validar e processar data de validade
+    if (!expiry || !expiry.includes('/')) {
+      throw new Error('Validade é obrigatória (formato MM/AA)');
+    }
+
+    const [expMonth, expYearInput] = expiry.split('/').map(s => s.trim());
     if (!expMonth || !expYearInput) {
       throw new Error('Validade inválida (use MM/AA)');
     }
 
     // Validar mês
-    if (expMonth.length !== 2 || parseInt(expMonth) < 1 || parseInt(expMonth) > 12) {
+    const monthNum = parseInt(expMonth);
+    if (expMonth.length !== 2 || monthNum < 1 || monthNum > 12) {
       throw new Error('Mês inválido (use 01-12)');
     }
 
@@ -359,7 +370,6 @@ const Payment = () => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
     const yearNum = parseInt(expYear);
-    const monthNum = parseInt(expMonth);
 
     // Validar se o ano é razoável (entre ano atual e +20 anos)
     if (yearNum < currentYear || yearNum > currentYear + 20) {
@@ -371,15 +381,18 @@ const Payment = () => {
       throw new Error('Cartão vencido');
     }
 
-    // Preparar dados para o MercadoPago
+    // Preparar dados para o MercadoPago (usar variáveis já definidas)
+
     const tokenData = {
-      cardNumber: cardNumber.replace(/\s+/g, ''),
-      cardholderName: cardName.trim(),
+      cardNumber: cleanCardNumber,
+      cardholderName: cardName.trim().toUpperCase(),
       securityCode: cvv,
       identificationType: 'CPF',
-      identificationNumber: docNumber.replace(/\D/g, ''),
-      expirationMonth: expMonth,
-      expirationYear: expYear,
+      identificationNumber: cleanCpf,
+      expirationMonth: expMonth.padStart(2, '0'), // Garantir 2 dígitos
+      expirationYear: expYear, // Ano completo (YYYY)
+      docType: 'CPF', // Campo adicional que o MP pode exigir
+      docNumber: cleanCpf // Campo adicional que o MP pode exigir
     };
 
     console.log('Criando token com dados:', {
@@ -389,18 +402,34 @@ const Payment = () => {
       expirationYear: tokenData.expirationYear,
       identificationType: tokenData.identificationType,
       identificationNumber: tokenData.identificationNumber.substring(0, 3) + '...',
-      securityCode: '***'
+      securityCode: '***',
+      docType: tokenData.docType,
+      docNumber: tokenData.docNumber?.substring(0, 3) + '...'
+    });
+
+    console.log('Dados originais dos campos:', {
+      cardNumber: cardNumber,
+      cardName: cardName,
+      expiry: expiry,
+      cvv: cvv,
+      docNumber: docNumber
     });
 
     // Validações finais antes de enviar
-    if (tokenData.cardNumber.length < 13 || tokenData.cardNumber.length > 19) {
+    if (!tokenData.cardNumber || tokenData.cardNumber.length < 13 || tokenData.cardNumber.length > 19) {
       throw new Error('Número do cartão deve ter entre 13 e 19 dígitos');
     }
-    if (tokenData.identificationNumber.length !== 11) {
-      throw new Error('CPF deve ter 11 dígitos');
+    if (!tokenData.identificationNumber || tokenData.identificationNumber.length !== 11) {
+      throw new Error('CPF deve ter exatamente 11 dígitos');
     }
-    if (tokenData.securityCode.length < 3 || tokenData.securityCode.length > 4) {
+    if (!tokenData.securityCode || tokenData.securityCode.length < 3 || tokenData.securityCode.length > 4) {
       throw new Error('CVV deve ter 3 ou 4 dígitos');
+    }
+    if (!tokenData.expirationMonth || !tokenData.expirationYear) {
+      throw new Error('Data de validade é obrigatória');
+    }
+    if (!tokenData.cardholderName || tokenData.cardholderName.length < 2) {
+      throw new Error('Nome do portador é obrigatório');
     }
 
     return new Promise<string>((resolve, reject) => {
@@ -1222,7 +1251,7 @@ const Payment = () => {
                         <Button
                           className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                           onClick={handlePayCard}
-                          disabled={payingCard || !mpPublicKey || Object.values(cardErrors).some(error => error !== '')}
+                          disabled={payingCard || !mpPublicKey || !cardNumber || !cardName || !expiry || !cvv || !docNumber}
                         >
                           {payingCard ? (
                             <div className="flex items-center space-x-2">
