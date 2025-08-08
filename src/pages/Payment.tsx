@@ -23,10 +23,16 @@ import {
 import { useGroupById, formatPrice } from '@/hooks/useGroups';
 import { getUserProfile, processGroupPayment } from '@/integrations/supabase/functions';
 import { useToast } from '@/hooks/use-toast';
-import { createPixPayment, getPayment, type MPayer } from '@/integrations/mercadopago';
 import { supabase } from '@/integrations/supabase/client';
 
 type PaymentMethod = 'balance' | 'pix' | 'card';
+
+type MPayer = {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  identification?: { type: 'CPF' | 'CNPJ'; number: string };
+};
 
 declare global {
   interface Window {
@@ -121,13 +127,14 @@ const Payment = () => {
     }
   };
 
-  const startPixPolling = (id: string) => {
+  const startPixPolling = async (id: string) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
 
     pollingRef.current = setInterval(async () => {
       try {
-        const resp = await getPayment(id);
-        const status = resp?.payment?.status;
+        const { data, error } = await supabase.functions.invoke('mercadopago-status', { body: { id } });
+        if (error) throw error;
+        const status = data?.payment?.status;
         if (status === 'approved' || status === 'authorized') {
           if (pollingRef.current) clearInterval(pollingRef.current);
 
@@ -209,24 +216,24 @@ const Payment = () => {
           last_name: 'JuntaPlay',
         };
 
-        const pixResp = await createPixPayment({
-          amountCents: monthlyFee, // cobrando apenas a mensalidade; caução é tratada no backend
-          description: `Assinatura do grupo ${group.name}`,
-          payer,
-          externalReference: `GROUP_${group.id}_${Date.now()}`,
+        const { data, error } = await supabase.functions.invoke('mercadopago-create', {
+          body: {
+            type: 'pix',
+            amountCents: monthlyFee,
+            description: `Assinatura do grupo ${group.name}`,
+            payer,
+            externalReference: `GROUP_${group.id}_${Date.now()}`,
+          },
         });
+        if (error || data?.error || !data?.success) throw new Error(error?.message || data?.error || 'Falha ao criar PIX');
 
-        if (!pixResp.success || !pixResp.payment) {
-          throw new Error(pixResp.error || 'Falha ao criar PIX');
-        }
-
-        const qr = pixResp.payment?.point_of_interaction?.transaction_data;
-        setPaymentId(pixResp.payment?.id?.toString() || null);
+        const qr = data.payment?.point_of_interaction?.transaction_data;
+        setPaymentId(data.payment?.id?.toString() || null);
         setPixQrBase64(qr?.qr_code_base64 || null);
         setPixCode(qr?.qr_code || null);
         setShowPixModal(true);
 
-        if (pixResp.payment?.id) startPixPolling(String(pixResp.payment.id));
+        if (data.payment?.id) startPixPolling(String(data.payment.id));
         setProcessing(false);
         return; // aguardará aprovação do PIX
       }
