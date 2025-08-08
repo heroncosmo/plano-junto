@@ -87,9 +87,9 @@ const AdminDashboard = () => {
     }
     try {
       setSavingPublicKey(true);
-      // Salvar em settings via RPC simples (usando service role na função edge)
-      const { data, error } = await supabase.functions.invoke('admin-save-credential', {
-        body: { provider: 'mercadopago_public_key', token: mpPublicKey }
+      // Salvar em settings via função edge específica
+      const { data, error } = await supabase.functions.invoke('admin-save-public-config', {
+        body: { key: 'mp_public_key', value: mpPublicKey }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -192,67 +192,16 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
+        {false && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Configurações de Pagamento</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSaveMpToken} className="space-y-4">
-              <div>
-                <Label className="text-sm">Provedor</Label>
-                <Input value="Mercado Pago" disabled className="mt-1 bg-gray-50" />
-              </div>
-              <div>
-                <Label htmlFor="mpToken" className="text-sm">Access Token (produção)</Label>
-                <Input
-                  id="mpToken"
-                  type="password"
-                  placeholder="Cole aqui seu Access Token do Mercado Pago"
-                  value={mpToken}
-                  onChange={(e) => setMpToken(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Write-only. O token não será exibido novamente.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button type="submit" disabled={savingToken}>
-                  {savingToken ? 'Salvando...' : 'Salvar Access Token'}
-                </Button>
-              </div>
-            </form>
-
-            <div className="h-px bg-gray-200 my-4" />
-
-            <form onSubmit={handleSavePublicKey} className="space-y-4">
-              <div>
-                <Label htmlFor="mpPublicKey" className="text-sm">Public Key (para cartão no frontend)</Label>
-                <Input
-                  id="mpPublicKey"
-                  placeholder="Cole aqui sua Public Key (APP_USR-...)"
-                  value={mpPublicKey}
-                  onChange={(e) => setMpPublicKey(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Chave pública, não sensível. Usada apenas para tokenização de cartão no navegador.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button type="submit" disabled={savingPublicKey}>
-                  {savingPublicKey ? 'Salvando...' : 'Salvar Public Key'}
-                </Button>
-              </div>
-
-              <div className="text-[11px] text-gray-500">
-                O Access Token é confidencial (server-side). A Public Key é usada no cliente para tokenizar cartões.
-              </div>
-            </form>
+            {/* Seção de credenciais desativada. Configure via Supabase Secrets. */}
           </CardContent>
         </Card>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
