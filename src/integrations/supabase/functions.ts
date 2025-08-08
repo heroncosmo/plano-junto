@@ -196,15 +196,14 @@ export async function getUserTransactions(limit = 50) {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('Usuário não autenticado');
 
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', user.user.id)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    // Usar RPC para contornar problemas de RLS
+    const { data, error } = await supabase.rpc('get_user_transactions_rpc', {
+      user_uuid: user.user.id,
+      limit_count: limit
+    });
 
     if (error) throw error;
-    
+
     return data || [];
   } catch (error) {
     console.error('Erro ao buscar transações:', error);

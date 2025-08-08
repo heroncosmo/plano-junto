@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronRight, Search, Wrench, Lock, Play, Music, Briefcase, GraduationCap } from 'lucide-react';
+import { ChevronRight, Search, Wrench, Play, Music, Briefcase, GraduationCap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Service {
@@ -49,9 +49,13 @@ const CreateGroup = () => {
   );
 
   const handleServiceSelect = (service: Service) => {
-    navigate(`/create-group/plan/${service.id}`, { 
-      state: { service } 
+    navigate(`/create-group/plan/${service.id}`, {
+      state: { service }
     });
+  };
+
+  const handleCustomGroupClick = () => {
+    navigate('/create-group/custom/info');
   };
 
   // Função para obter o ícone baseado no nome do serviço
@@ -134,7 +138,10 @@ const CreateGroup = () => {
         <div className="border-t border-gray-200 my-8"></div>
 
         {/* Grupo Público - Clone exato do Kotas */}
-        <Card className="mb-4 bg-white border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer">
+        <Card
+          className="mb-4 bg-white border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
+          onClick={handleCustomGroupClick}
+        >
           <CardContent className="p-5">
             <div className="flex items-start space-x-4">
               <div className="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -143,30 +150,11 @@ const CreateGroup = () => {
               <div className="flex-1">
                 <h3 className="font-medium text-gray-800 mb-2">Grupo Público</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  É preciso fornecer todas as configurações do que será compartilhado para que 
+                  É preciso fornecer todas as configurações do que será compartilhado para que
                   seu grupo seja listado no site. Grupos públicos podem passar por aprovação.
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 mt-1" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Grupo Privado - Clone exato do Kotas */}
-        <Card className="bg-cyan-700 text-white hover:shadow-md transition-all duration-200 cursor-pointer">
-          <CardContent className="p-5">
-            <div className="flex items-start space-x-4">
-              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Lock className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-white mb-2">Grupo privado</h3>
-                <p className="text-sm text-cyan-100 leading-relaxed">
-                  Somente as pessoas que você convidar ou que pertençam a sua rede de amigos 
-                  poderão fazer parte. Não requer aprovação.
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-cyan-200 flex-shrink-0 mt-1" />
             </div>
           </CardContent>
         </Card>

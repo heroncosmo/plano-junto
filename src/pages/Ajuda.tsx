@@ -81,8 +81,8 @@ const Ajuda = () => {
         answer: "Isso pode acontecer quando várias pessoas tentam participar simultaneamente. Os créditos são devolvidos automaticamente. Tente participar de outro grupo ou crie o seu próprio."
       },
       {
-        question: "Critérios de aprovação de grupos públicos vs. grupos privados.",
-        answer: "Grupos públicos são aprovados automaticamente após verificação básica. Grupos privados requerem aprovação manual e podem ter critérios específicos definidos pelo administrador."
+        question: "Critérios de aprovação de grupos públicos.",
+        answer: "Grupos públicos são aprovados automaticamente após verificação básica para garantir que atendem aos padrões da plataforma."
       }
     ],
     contato: [

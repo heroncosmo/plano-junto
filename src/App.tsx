@@ -27,6 +27,13 @@ import CreateGroupPlan from "./pages/CreateGroupPlan";
 import CreateGroupInfo from "./pages/CreateGroupInfo";
 import CreateGroupFidelity from "./pages/CreateGroupFidelity";
 import CreateGroupConfirmation from "./pages/CreateGroupConfirmation";
+import CreateCustomGroupValues from "./pages/CreateCustomGroupValues";
+import CreateCustomGroupFidelity from "./pages/CreateCustomGroupFidelity";
+import CreateCustomGroupInfo from "./pages/CreateCustomGroupInfo";
+import CreateCustomGroupPricing from "./pages/CreateCustomGroupPricing";
+import CreateCustomGroupQuestions from "./pages/CreateCustomGroupQuestions";
+import CreateCustomGroupQuestions2 from "./pages/CreateCustomGroupQuestions2";
+import CreateCustomGroupSummary from "./pages/CreateCustomGroupSummary";
 import ManageGroup from "./pages/ManageGroup";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -66,6 +73,8 @@ import CancelamentoMotivo from "./pages/CancelamentoMotivo";
 import CancelamentoConfirmacao from "./pages/CancelamentoConfirmacao";
 import CancelamentoSucesso from "./pages/CancelamentoSucesso";
 import LogoPrint from "./pages/LogoPrint";
+import OAuthSetup from "./pages/OAuthSetup";
+import AuthTest from "./pages/AuthTest";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +110,8 @@ const AppRouter = () => {
               
               {/* Outras rotas */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/oauth-setup" element={<OAuthSetup />} />
+              <Route path="/auth-test" element={<AuthTest />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/groups" element={<AllGroups />} />
               <Route path="/my-groups" element={
@@ -192,6 +203,43 @@ const AppRouter = () => {
                       <Route path="/create-group/confirmation" element={
                         <RequireAuth>
                           <CreateGroupConfirmation />
+                        </RequireAuth>
+                      } />
+
+                      {/* Custom Group Creation Flow */}
+                      <Route path="/create-group/custom/values" element={
+                        <RequireAuth>
+                          <CreateCustomGroupValues />
+                        </RequireAuth>
+                      } />
+                      <Route path="/create-group/custom/fidelity" element={
+                        <RequireAuth>
+                          <CreateCustomGroupFidelity />
+                        </RequireAuth>
+                      } />
+                      <Route path="/create-group/custom/info" element={
+                        <RequireAuth>
+                          <CreateCustomGroupInfo />
+                        </RequireAuth>
+                      } />
+                      <Route path="/create-group/custom/pricing" element={
+                        <RequireAuth>
+                          <CreateCustomGroupPricing />
+                        </RequireAuth>
+                      } />
+                      <Route path="/create-group/custom/questions" element={
+                        <RequireAuth>
+                          <CreateCustomGroupQuestions />
+                        </RequireAuth>
+                      } />
+                      <Route path="/create-group/custom/questions2" element={
+                        <RequireAuth>
+                          <CreateCustomGroupQuestions2 />
+                        </RequireAuth>
+                      } />
+                      <Route path="/create-group/custom/summary" element={
+                        <RequireAuth>
+                          <CreateCustomGroupSummary />
                         </RequireAuth>
                       } />
               
