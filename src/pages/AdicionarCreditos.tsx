@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,15 @@ import { addUserCredits } from '@/integrations/supabase/functions';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { supabase } from '@/integrations/supabase/client';
+
+// Tipagem global do SDK v1 do Mercado Pago
+declare global {
+  interface Window {
+    Mercadopago?: any;
+    MercadoPago?: any;
+  }
+}
 
 const AdicionarCreditos = () => {
   const navigate = useNavigate();
@@ -18,6 +27,23 @@ const AdicionarCreditos = () => {
   const [metodoPagamento, setMetodoPagamento] = useState('pix');
   const [loading, setLoading] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  // PIX state
+  const [showPixModal, setShowPixModal] = useState(false);
+  const [pixQrBase64, setPixQrBase64] = useState<string | null>(null);
+  const [pixCode, setPixCode] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cartão state
+  const [mpPublicKey, setMpPublicKey] = useState('');
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [expiry, setExpiry] = useState(''); // MM/AA
+  const [cvv, setCvv] = useState('');
+  const [docNumber, setDocNumber] = useState(''); // CPF
+  const [payingCard, setPayingCard] = useState(false);
 
   const valorPredefinido = [1000, 2000, 5000, 10000, 20000, 50000]; // Em centavos
 
@@ -41,14 +67,93 @@ const AdicionarCreditos = () => {
     return Math.max(Math.floor(valorCentavos * 0.05), 100); // 5% ou mínimo R$ 1,00
   };
 
+  useEffect(() => {
+    // Carregar Public Key (para cartão)
+    const loadPublicKey = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('public-config');
+        if (!error && data?.mpPublicKey) setMpPublicKey(data.mpPublicKey);
+      } catch (e) {
+        // segue sem cartão
+      }
+    };
+    loadPublicKey();
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  const startPixPolling = (id: string, valorCentavosLiquido: number) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+
+    pollingRef.current = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('mercadopago-status', {
+          body: { id }
+        });
+        if (error) throw error;
+        const status = data?.payment?.status;
+        if (status === 'approved' || status === 'authorized') {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          await processarCreditos(valorCentavosLiquido, id);
+          setShowPixModal(false);
+        }
+      } catch (e) {
+        console.error('Erro no polling do PIX:', e);
+      }
+    }, 3000);
+  };
+
+  async function loadMpScript(): Promise<void> {
+    if (window.Mercadopago || window.MercadoPago) return;
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://secure.mlstatic.com/sdk/javascript/v1/mercadopago.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Falha ao carregar SDK Mercado Pago'));
+      document.body.appendChild(script);
+    });
+  }
+
+  async function createCardToken(): Promise<string> {
+    if (!mpPublicKey) throw new Error('Public Key do Mercado Pago não configurada');
+    await loadMpScript();
+
+    if (!window.Mercadopago) throw new Error('SDK Mercado Pago indisponível');
+    window.Mercadopago.setPublishableKey(mpPublicKey);
+
+    const [expMonth, expYearShort] = (expiry || '').split('/').map(s => s.trim());
+    if (!expMonth || !expYearShort) throw new Error('Validade inválida (use MM/AA)');
+    const expYear = `20${expYearShort}`;
+
+    return new Promise<string>((resolve, reject) => {
+      window.Mercadopago.createToken({
+        cardNumber: cardNumber.replace(/\s+/g, ''),
+        cardholderName: cardName,
+        securityCode: cvv,
+        identificationType: 'CPF',
+        identificationNumber: (docNumber || '').replace(/\D/g, ''),
+        expirationMonth: expMonth,
+        expirationYear: expYear,
+      }, (status: number, response: any) => {
+        if (status === 200 || status === 201) {
+          resolve(response.id);
+        } else {
+          reject(new Error(response?.message || 'Falha ao tokenizar cartão'));
+        }
+      });
+    });
+  }
+
   const handleProcessarPagamento = async () => {
     const valorCentavos = parseInt(valor);
     
     if (!valorCentavos || valorCentavos < 500) { // Mínimo R$ 5,00
       toast({
-        title: "Valor inválido",
-        description: "O valor mínimo para adicionar créditos é R$ 5,00",
-        variant: "destructive",
+        title: 'Valor inválido',
+        description: 'O valor mínimo para adicionar créditos é R$ 5,00',
+        variant: 'destructive',
       });
       return;
     }
@@ -56,43 +161,110 @@ const AdicionarCreditos = () => {
     try {
       setLoading(true);
 
-      // Simular processamento de pagamento externo
-      let externalPaymentId: string | undefined;
-
       if (metodoPagamento === 'pix') {
-        // Simular geração de PIX
-        externalPaymentId = `PIX_${Date.now()}`;
-        
-        // Em um sistema real, aqui você integraria com um gateway de pagamento
-        // Por exemplo, Mercado Pago, PagSeguro, etc.
-        toast({
-          title: "PIX Gerado",
-          description: "Escaneie o QR Code ou copie o código PIX para realizar o pagamento",
+        const taxa = calcularTaxa(valorCentavos);
+        const totalCentavos = valorCentavos + taxa;
+
+        // Buscar e-mail do usuário (se autenticado)
+        const { data: auth } = await supabase.auth.getUser();
+        const payer = {
+          email: auth?.user?.email || 'user@example.com',
+          first_name: 'Usuario',
+          last_name: 'JuntaPlay',
+        };
+
+        const { data, error } = await supabase.functions.invoke('mercadopago-create', {
+          body: {
+            type: 'pix',
+            amountCents: totalCentavos,
+            description: `Adicionar créditos ${formatCurrency(valorCentavos)}`,
+            payer,
+            externalReference: `CREDITO_${Date.now()}`,
+          }
         });
-        
-        // Simular aprovação do pagamento após alguns segundos
-        setTimeout(async () => {
-          await processarCreditos(valorCentavos, externalPaymentId!);
-        }, 3000);
-        
-      } else {
-        // Simular processamento de cartão
-        externalPaymentId = `CARD_${Date.now()}`;
-        
-        // Simular processamento
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        await processarCreditos(valorCentavos, externalPaymentId);
+        if (error || data?.error || !data?.success) throw new Error(error?.message || data?.error || 'Falha ao criar PIX');
+
+        const qr = data.payment?.point_of_interaction?.transaction_data;
+        setPaymentId(data.payment?.id?.toString() || null);
+        setPixQrBase64(qr?.qr_code_base64 || null);
+        setPixCode(qr?.qr_code || null);
+        setShowPixModal(true);
+
+        if (data.payment?.id) startPixPolling(String(data.payment.id), valorCentavos);
+        setLoading(false);
+        return; // aguardar pagamento PIX
       }
 
+      if (metodoPagamento === 'credit_card' || metodoPagamento === 'debit_card') {
+        if (!mpPublicKey) {
+          toast({ title: 'Indisponível', description: 'Configure a Public Key no Admin para usar cartão.', variant: 'destructive' });
+          setLoading(false);
+          return;
+        }
+        setShowCardForm(true);
+        setLoading(false);
+        return;
+      }
+
+      // Outros métodos não implementados
+      setLoading(false);
     } catch (error) {
       console.error('Erro no pagamento:', error);
       toast({
-        title: "Erro no pagamento",
-        description: "Não foi possível processar o pagamento. Tente novamente.",
-        variant: "destructive",
+        title: 'Erro no pagamento',
+        description: 'Não foi possível processar o pagamento. Tente novamente.',
+        variant: 'destructive',
       });
       setLoading(false);
+    }
+  };
+
+  const handlePayCard = async () => {
+    const valorCentavos = parseInt(valor);
+    if (!valorCentavos || valorCentavos < 500) return;
+    try {
+      setPayingCard(true);
+      const token = await createCardToken();
+
+      const taxa = calcularTaxa(valorCentavos);
+      const totalCentavos = valorCentavos + taxa;
+
+      const { data: auth } = await supabase.auth.getUser();
+      const payer = {
+        email: auth?.user?.email || 'user@example.com',
+        first_name: 'Usuario',
+        last_name: 'JuntaPlay',
+        identification: { type: 'CPF', number: (docNumber || '').replace(/\D/g, '') },
+      };
+
+      const { data, error } = await supabase.functions.invoke('mercadopago-create', {
+        body: {
+          type: 'card',
+          amountCents: totalCentavos,
+          description: `Adicionar créditos ${formatCurrency(valorCentavos)}`,
+          payer,
+          token,
+          installments: 1,
+          externalReference: `CREDITO_${Date.now()}`,
+        }
+      });
+      if (error || data?.error || !data?.success) throw new Error(error?.message || data?.error || 'Falha ao criar pagamento no cartão');
+
+      const paymentExternalId = String(data.payment?.id || '');
+      const result = await addUserCredits(valorCentavos, 'credit_card', paymentExternalId);
+
+      if (result.success) {
+        setPaymentSuccess(true);
+        toast({ title: 'Créditos adicionados!', description: `${formatCurrency(valorCentavos)} foram adicionados à sua conta` });
+        setTimeout(() => navigate('/creditos'), 3000);
+      } else {
+        throw new Error(result.error || 'Erro desconhecido');
+      }
+    } catch (error: any) {
+      console.error('Erro no pagamento com cartão:', error);
+      toast({ title: 'Erro', description: error?.message || 'Falha ao processar pagamento com cartão', variant: 'destructive' });
+    } finally {
+      setPayingCard(false);
     }
   };
 
@@ -100,18 +272,16 @@ const AdicionarCreditos = () => {
     try {
       const result = await addUserCredits(
         valorCentavos,
-        metodoPagamento as 'pix' | 'credit_card' | 'debit_card',
+        'pix',
         externalPaymentId
       );
 
       if (result.success) {
         setPaymentSuccess(true);
         toast({
-          title: "Créditos adicionados!",
+          title: 'Créditos adicionados!',
           description: `${formatCurrency(valorCentavos)} foram adicionados à sua conta`,
         });
-        
-        // Redirecionar após 3 segundos
         setTimeout(() => {
           navigate('/creditos');
         }, 3000);
@@ -121,9 +291,9 @@ const AdicionarCreditos = () => {
     } catch (error) {
       console.error('Erro ao adicionar créditos:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível adicionar os créditos. Entre em contato com o suporte.",
-        variant: "destructive",
+        title: 'Erro',
+        description: 'Não foi possível adicionar os créditos. Entre em contato com o suporte.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -267,7 +437,7 @@ const AdicionarCreditos = () => {
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                        <RadioGroupItem value="credit_card" id="credit_card" />
+                        <RadioGroupItem value="credit_card" id="credit_card" disabled={!mpPublicKey} />
                         <Label htmlFor="credit_card" className="flex items-center cursor-pointer flex-1">
                           <CreditCard className="h-5 w-5 mr-2 text-cyan-600" />
                           <div>
@@ -275,11 +445,14 @@ const AdicionarCreditos = () => {
                             <div className="text-sm text-gray-500">
                               Aprovação em até 1 hora
                             </div>
+                            {!mpPublicKey && (
+                              <div className="text-[11px] text-red-600 mt-1">Indisponível: configure a Public Key no Admin.</div>
+                            )}
                           </div>
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                        <RadioGroupItem value="debit_card" id="debit_card" />
+                        <RadioGroupItem value="debit_card" id="debit_card" disabled={!mpPublicKey} />
                         <Label htmlFor="debit_card" className="flex items-center cursor-pointer flex-1">
                           <CreditCard className="h-5 w-5 mr-2 text-purple-600" />
                           <div>
@@ -326,6 +499,84 @@ const AdicionarCreditos = () => {
         </div>
       </main>
       
+      {/* PIX Modal */}
+      {showPixModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold mb-3">Pagamento PIX</h3>
+            {pixQrBase64 ? (
+              <img
+                src={`data:image/png;base64,${pixQrBase64}`}
+                alt="QR Code PIX"
+                className="w-56 h-56 mx-auto mb-3"
+              />
+            ) : (
+              <div className="w-56 h-56 bg-gray-100 animate-pulse mx-auto mb-3" />
+            )}
+            {pixCode && (
+              <div className="bg-gray-100 rounded p-2 text-xs break-all mb-3">
+                {pixCode}
+              </div>
+            )}
+            <div className="text-sm text-gray-600 mb-4">
+              Escaneie o QR Code no seu banco. Assim que o pagamento for aprovado, os créditos serão adicionados automaticamente.
+            </div>
+            <div className="flex gap-2">
+              <Button className="flex-1" onClick={() => navigator.clipboard.writeText(pixCode || '')}>
+                Copiar código PIX
+              </Button>
+              <Button variant="outline" onClick={() => setShowPixModal(false)}>
+                Fechar
+              </Button>
+            </div>
+            {paymentId && (
+              <div className="text-[10px] text-gray-400 mt-2">Pagamento #{paymentId}</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cartão Modal */}
+      {showCardForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Cartão</h3>
+              <div>
+                <Label htmlFor="cardNumber">Número do Cartão</Label>
+                <Input id="cardNumber" placeholder="0000 0000 0000 0000" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="expiry">Validade</Label>
+                  <Input id="expiry" placeholder="MM/AA" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="cvv">CVV</Label>
+                  <Input id="cvv" placeholder="123" value={cvv} onChange={(e) => setCvv(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="cardName">Nome no Cartão</Label>
+                <Input id="cardName" placeholder="Nome como está no cartão" value={cardName} onChange={(e) => setCardName(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="cpf">CPF</Label>
+                <Input id="cpf" placeholder="000.000.000-00" value={docNumber} onChange={(e) => setDocNumber(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <Button className="flex-1" onClick={handlePayCard} disabled={payingCard || !mpPublicKey}>
+                  {payingCard ? 'Processando...' : 'Pagar'}
+                </Button>
+                <Button variant="outline" onClick={() => setShowCardForm(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

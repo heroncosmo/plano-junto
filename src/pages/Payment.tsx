@@ -24,8 +24,16 @@ import { useGroupById, formatPrice } from '@/hooks/useGroups';
 import { getUserProfile, processGroupPayment } from '@/integrations/supabase/functions';
 import { useToast } from '@/hooks/use-toast';
 import { createPixPayment, getPayment, type MPayer } from '@/integrations/mercadopago';
+import { supabase } from '@/integrations/supabase/client';
 
 type PaymentMethod = 'balance' | 'pix' | 'card';
+
+declare global {
+  interface Window {
+    Mercadopago?: any;
+    MercadoPago?: any;
+  }
+}
 
 const Payment = () => {
   const { id } = useParams();
@@ -36,18 +44,26 @@ const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('balance');
   const [showMoreMethods, setShowMoreMethods] = useState(false);
   const [showCardForm, setShowCardForm] = useState(false);
-  const [showPixQr, setShowPixQr] = useState(false);
+  const [showPixModal, setShowPixModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [processing, setProcessing] = useState(false);
   const [userBalance, setUserBalance] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(true);
 
   // PIX state
-  const [showPixModal, setShowPixModal] = useState(false);
   const [pixQrBase64, setPixQrBase64] = useState<string | null>(null);
   const [pixCode, setPixCode] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Card state
+  const [mpPublicKey, setMpPublicKey] = useState<string>('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [expiry, setExpiry] = useState(''); // MM/AA
+  const [cvv, setCvv] = useState('');
+  const [docNumber, setDocNumber] = useState(''); // CPF
+  const [payingCard, setPayingCard] = useState(false);
 
   const relationship = searchParams.get('relationship') || 'familia';
   const { group, loading, error } = useGroupById(id || '');
@@ -60,6 +76,7 @@ const Payment = () => {
         const profile = await getUserProfile();
         if (profile) {
           setUserBalance(profile.balance_cents || 0);
+          if (profile.cpf && !docNumber) setDocNumber(profile.cpf);
         }
       } catch (error) {
         console.error('Erro ao carregar saldo:', error);
@@ -73,8 +90,18 @@ const Payment = () => {
       }
     };
 
+    const loadPublicKey = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('public-config');
+        if (!error && data?.mpPublicKey) setMpPublicKey(data.mpPublicKey);
+      } catch (e) {
+        console.warn('Não foi possível carregar a Public Key do MP. Cartão ficará indisponível.', e);
+      }
+    };
+
     if (user) {
       loadUserBalance();
+      loadPublicKey();
     }
 
     return () => {
@@ -127,6 +154,48 @@ const Payment = () => {
     }, 3000);
   };
 
+  async function loadMpScript(): Promise<void> {
+    if (window.Mercadopago || window.MercadoPago) return;
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://secure.mlstatic.com/sdk/javascript/v1/mercadopago.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Falha ao carregar SDK Mercado Pago'));
+      document.body.appendChild(script);
+    });
+  }
+
+  async function createCardToken(): Promise<string> {
+    if (!mpPublicKey) throw new Error('Public Key do Mercado Pago não configurada');
+    await loadMpScript();
+
+    // v1 SDK
+    if (!window.Mercadopago) throw new Error('SDK Mercado Pago indisponível');
+    window.Mercadopago.setPublishableKey(mpPublicKey);
+
+    const [expMonth, expYearShort] = (expiry || '').split('/').map(s => s.trim());
+    if (!expMonth || !expYearShort) throw new Error('Validade inválida (use MM/AA)');
+    const expYear = `20${expYearShort}`;
+
+    return new Promise<string>((resolve, reject) => {
+      window.Mercadopago.createToken({
+        cardNumber: cardNumber.replace(/\s+/g, ''),
+        cardholderName: cardName,
+        securityCode: cvv,
+        identificationType: 'CPF',
+        identificationNumber: (docNumber || '').replace(/\D/g, ''),
+        expirationMonth: expMonth,
+        expirationYear: expYear,
+      }, (status: number, response: any) => {
+        if (status === 200 || status === 201) {
+          resolve(response.id);
+        } else {
+          reject(new Error(response?.message || 'Falha ao tokenizar cartão'));
+        }
+      });
+    });
+  }
+
   const handlePayment = async () => {
     if (!group || !user) return;
     setProcessing(true);
@@ -162,13 +231,16 @@ const Payment = () => {
         return; // aguardará aprovação do PIX
       }
 
+      if (paymentMethod === 'card') {
+        setShowCardForm(true);
+        setProcessing(false);
+        return;
+      }
+
       let paymentMethodParam: 'credits' | 'pix' | 'credit_card' | 'debit_card';
       switch (paymentMethod) {
         case 'balance':
           paymentMethodParam = 'credits';
-          break;
-        case 'card':
-          paymentMethodParam = 'credit_card';
           break;
         default:
           paymentMethodParam = 'credits';
@@ -193,6 +265,49 @@ const Payment = () => {
       toast({ title: 'Erro', description: 'Erro inesperado ao processar pagamento', variant: 'destructive' });
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handlePayCard = async () => {
+    if (!group || !user) return;
+    try {
+      setPayingCard(true);
+      const token = await createCardToken();
+
+      const payer = {
+        email: user.email || 'user@example.com',
+        first_name: user.user_metadata?.full_name || 'Usuario',
+        last_name: 'JuntaPlay',
+        identification: { type: 'CPF', number: (docNumber || '').replace(/\D/g, '') },
+      };
+
+      // Criar pagamento via Supabase Edge Function (independe de hospedagem)
+      const { data, error } = await supabase.functions.invoke('mercadopago-create', {
+        body: {
+          type: 'card',
+          amountCents: monthlyFee,
+          description: `Assinatura do grupo ${group.name}`,
+          payer,
+          token,
+          installments: 1,
+          externalReference: `GROUP_${group.id}_${Date.now()}`,
+        },
+      });
+      if (error || data?.error || !data?.success) throw new Error(error?.message || data?.error || 'Falha ao criar pagamento com cartão');
+
+      const result = await processGroupPayment(group.id, monthlyFee, 'credit_card');
+      if (result.success) {
+        toast({ title: 'Sucesso!', description: 'Pagamento aprovado via Cartão.' });
+        setShowCardForm(false);
+        setTimeout(() => navigate(`/payment/success/${id}`), 800);
+      } else {
+        throw new Error(result.error || 'Falha ao registrar pagamento');
+      }
+    } catch (e: any) {
+      console.error('Erro no pagamento com cartão:', e);
+      toast({ title: 'Erro no cartão', description: e?.message || 'Falha ao processar pagamento', variant: 'destructive' });
+    } finally {
+      setPayingCard(false);
     }
   };
 
@@ -338,12 +453,15 @@ const Payment = () => {
 
                     {/* Credit Card */}
                     <div className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                      <RadioGroupItem value="card" id="card" />
+                      <RadioGroupItem value="card" id="card" disabled={!mpPublicKey} />
                       <Label htmlFor="card" className="flex-1 cursor-pointer">
                         <div className="flex justify-between items-center">
                           <span className="font-medium text-gray-900">Cartão de Crédito</span>
                           <span className="text-red-600 text-xs">+ {formatPrice(cardFee)}</span>
                         </div>
+                        {!mpPublicKey && (
+                          <div className="text-[11px] text-red-600 mt-1">Indisponível: configure a Public Key no Admin.</div>
+                        )}
                       </Label>
                     </div>
                   </RadioGroup>
@@ -422,33 +540,42 @@ const Payment = () => {
         </div>
       )}
 
-      {/* Credit Card Form Modal (placeholder) */}
+      {/* Credit Card Form Modal */}
       {showCardForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Cartão de Crédito</h3>
+              
               <div>
                 <Label htmlFor="cardNumber">Número do Cartão</Label>
-                <Input id="cardNumber" placeholder="0000 0000 0000 0000" />
+                <Input id="cardNumber" placeholder="0000 0000 0000 0000" value={cardNumber} onChange={e => setCardNumber(e.target.value)} />
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="expiry">Validade</Label>
-                  <Input id="expiry" placeholder="MM/AA" />
+                  <Input id="expiry" placeholder="MM/AA" value={expiry} onChange={e => setExpiry(e.target.value)} />
                 </div>
                 <div>
                   <Label htmlFor="cvv">CVV</Label>
-                  <Input id="cvv" placeholder="123" />
+                  <Input id="cvv" placeholder="123" value={cvv} onChange={e => setCvv(e.target.value)} />
                 </div>
               </div>
+              
               <div>
                 <Label htmlFor="cardName">Nome no Cartão</Label>
-                <Input id="cardName" placeholder="Nome como está no cartão" />
+                <Input id="cardName" placeholder="Nome como está no cartão" value={cardName} onChange={e => setCardName(e.target.value)} />
               </div>
+
+              <div>
+                <Label htmlFor="cpf">CPF</Label>
+                <Input id="cpf" placeholder="000.000.000-00" value={docNumber} onChange={e => setDocNumber(e.target.value)} />
+              </div>
+              
               <div className="flex space-x-2">
-                <Button className="flex-1" onClick={() => setShowCardForm(false)}>
-                  Pagar {formatPrice(total * quantity + cardFee)}
+                <Button className="flex-1" onClick={handlePayCard} disabled={payingCard || !mpPublicKey}>
+                  {payingCard ? 'Processando...' : `Pagar ${formatPrice(total * quantity + cardFee)}`}
                 </Button>
                 <Button variant="outline" onClick={() => setShowCardForm(false)}>
                   Cancelar
