@@ -81,13 +81,33 @@ const Payment = () => {
   const relationship = searchParams.get('relationship') || 'familia';
   const { group, loading, error } = useGroupById(id || '');
 
+  // Função para interpretar motivos de rejeição do MercadoPago
+  const getRejectReason = (statusDetail: string): string => {
+    const reasons: {[key: string]: string} = {
+      'cc_rejected_insufficient_amount': 'Saldo insuficiente no cartão',
+      'cc_rejected_bad_filled_card_number': 'Número do cartão inválido',
+      'cc_rejected_bad_filled_date': 'Data de validade inválida',
+      'cc_rejected_bad_filled_security_code': 'CVV inválido',
+      'cc_rejected_bad_filled_other': 'Dados do cartão incorretos',
+      'cc_rejected_blacklist': 'Cartão bloqueado',
+      'cc_rejected_call_for_authorize': 'Autorização necessária - entre em contato com seu banco',
+      'cc_rejected_card_disabled': 'Cartão desabilitado',
+      'cc_rejected_duplicated_payment': 'Pagamento duplicado',
+      'cc_rejected_high_risk': 'Pagamento rejeitado por segurança',
+      'cc_rejected_max_attempts': 'Muitas tentativas - tente novamente mais tarde',
+      'cc_rejected_other_reason': 'Cartão rejeitado pelo banco emissor'
+    };
+
+    return reasons[statusDetail] || 'Pagamento não autorizado pelo banco emissor';
+  };
+
   // Função para preencher dados de teste automaticamente
   const fillTestData = () => {
     setCardNumber('4000 0000 0000 0002');
     setCardName('TESTE USUARIO');
     setExpiry('12/25');
     setCvv('123');
-    setDocNumber('111.444.777-35');
+    setDocNumber('111.111.111-11'); // CPF de teste válido do MercadoPago
     setTestMode(true);
 
     console.log('🧪 Dados de teste preenchidos automaticamente');
@@ -107,7 +127,7 @@ const Payment = () => {
         'TESTE USUARIO',
         '12/25',
         '123',
-        '11144477735'
+        '11111111111' // CPF de teste válido do MercadoPago
       );
       console.log('✅ Token criado com sucesso:', token);
       toast({
@@ -706,10 +726,14 @@ const Payment = () => {
         })
         .eq('id', orderData.order_id);
 
-      // 5. Verificar se foi aprovado imediatamente
+      // 5. Verificar status do pagamento e agir imediatamente
       const paymentStatus = data.payment?.status;
+      const paymentStatusDetail = data.payment?.status_detail;
+
+      console.log('Status do pagamento:', { paymentStatus, paymentStatusDetail, payment: data.payment });
+
       if (paymentStatus === 'approved' || paymentStatus === 'authorized') {
-        // Processar o pedido imediatamente
+        // ✅ APROVADO IMEDIATAMENTE
         const { data: processResult, error: processError } = await supabase.rpc('process_order_payment', {
           p_order_id: orderData.order_id,
           p_external_payment_id: data.payment?.id?.toString(),
@@ -720,20 +744,43 @@ const Payment = () => {
           throw new Error(processResult?.error || 'Falha ao processar pagamento');
         }
 
-        toast({ title: 'Sucesso!', description: 'Pagamento aprovado via Cartão.' });
-        setTimeout(() => navigate(`/payment/success/${data.payment?.id}`), 800);
-      } else if (paymentStatus === 'pending' || paymentStatus === 'in_process') {
-        // Pagamento em análise
-        toast({ title: 'Pagamento em análise', description: 'Seu pagamento está sendo processado. Você receberá uma notificação quando for aprovado.' });
-        setTimeout(() => navigate(`/payment/pending/${data.payment?.id}`), 800);
-      } else {
-        // Pagamento rejeitado
+        toast({ title: 'Sucesso!', description: 'Pagamento aprovado! Bem-vindo ao grupo!' });
+        setTimeout(() => navigate(`/payment/success/card`), 1000);
+
+      } else if (paymentStatus === 'rejected') {
+        // ❌ REJEITADO IMEDIATAMENTE
         await supabase
           .from('orders')
-          .update({ status: 'failed' })
+          .update({
+            status: 'failed',
+            external_payment_data: data.payment
+          })
           .eq('id', orderData.order_id);
 
-        throw new Error('Pagamento rejeitado pelo cartão');
+        // Mostrar motivo da rejeição
+        const rejectionReason = getRejectReason(paymentStatusDetail);
+        throw new Error(rejectionReason);
+
+      } else if (paymentStatus === 'pending' || paymentStatus === 'in_process') {
+        // ⏳ EM ANÁLISE REAL
+        toast({
+          title: 'Pagamento em Análise',
+          description: 'Seu pagamento está sendo analisado. Acompanhe o status na seção Faturas.'
+        });
+
+        setTimeout(() => navigate(`/faturas?highlight=${orderData.order_id}`), 1500);
+
+      } else {
+        // ❓ STATUS DESCONHECIDO - tratar como rejeitado
+        await supabase
+          .from('orders')
+          .update({
+            status: 'failed',
+            external_payment_data: data.payment
+          })
+          .eq('id', orderData.order_id);
+
+        throw new Error('Pagamento não foi aprovado. Tente novamente.');
       }
     } catch (e: any) {
       console.error('Erro no pagamento com cartão:', e);

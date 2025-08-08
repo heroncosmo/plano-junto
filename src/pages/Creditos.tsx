@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Minus, Eye, Wallet, TrendingUp, Clock } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Eye, Wallet, TrendingUp, Clock, CreditCard, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, getUserTransactions } from '@/integrations/supabase/functions';
 import { useToast } from '@/hooks/use-toast';
@@ -193,12 +193,43 @@ const Creditos = () => {
             </CardContent>
           </Card>
 
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/faturas')}>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Minhas Faturas</h3>
+                    <p className="text-sm text-gray-600">Pagamentos e tentativas de entrada em grupos</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/grupos')}>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Users className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Explorar Grupos</h3>
+                    <p className="text-sm text-gray-600">Encontre novos grupos para participar</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Transactions Section */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Histórico de Transações</h2>
-                <p className="text-sm text-gray-600 mt-1">Suas últimas movimentações financeiras</p>
+                <p className="text-sm text-gray-600 mt-1">Suas últimas movimentações de saldo</p>
               </div>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="h-4 w-4 mr-1" />

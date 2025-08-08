@@ -38,6 +38,7 @@ import Creditos from "./pages/Creditos";
 import AdicionarCreditos from "./pages/AdicionarCreditos";
 import SacarCreditos from "./pages/SacarCreditos";
 import DetalhesTransacao from "./pages/DetalhesTransacao";
+import Faturas from "./pages/Faturas";
 import MyGroups from "./pages/MyGroups";
 import Perfil from "./pages/Perfil";
 import Ajuda from "./pages/Ajuda";
@@ -206,6 +207,11 @@ const AppRouter = () => {
               <Route path="/creditos/transacao/:id" element={
                 <RequireAuth>
                   <DetalhesTransacao />
+                </RequireAuth>
+              } />
+              <Route path="/faturas" element={
+                <RequireAuth>
+                  <Faturas />
                 </RequireAuth>
               } />
               
