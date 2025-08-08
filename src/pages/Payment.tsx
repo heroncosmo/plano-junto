@@ -419,8 +419,12 @@ const Payment = () => {
       expMonth: expMonth,
       expYear: expYear,
       expMonthPadded: expMonth?.padStart(2, '0'),
-      expYearFull: expYear
+      expYearFull: expYear,
+      expMonthType: typeof expMonth,
+      expYearType: typeof expYear
     });
+
+    console.log('TokenData completo que será enviado:', tokenData);
 
     // Validações finais antes de enviar
     if (!tokenData.cardNumber || tokenData.cardNumber.length < 13 || tokenData.cardNumber.length > 19) {
@@ -440,7 +444,26 @@ const Payment = () => {
     }
 
     return new Promise<string>((resolve, reject) => {
-      window.Mercadopago.createToken(tokenData, (status: number, response: any) => {
+      // Criar objeto com nomes corretos para a API do MercadoPago V1
+      // Garantir que o mês tenha 2 dígitos e o ano tenha 2 dígitos (YY)
+      const month = tokenData.expirationMonth.toString().padStart(2, '0');
+      const year = tokenData.expirationYear.toString().length === 4
+        ? tokenData.expirationYear.substring(2)
+        : tokenData.expirationYear.toString().padStart(2, '0');
+
+      const mpTokenData = {
+        cardNumber: tokenData.cardNumber,
+        cardholderName: tokenData.cardholderName,
+        securityCode: tokenData.securityCode,
+        identificationType: tokenData.identificationType,
+        identificationNumber: tokenData.identificationNumber,
+        cardExpirationMonth: month,
+        cardExpirationYear: year
+      };
+
+      console.log('Dados enviados para MP com nomes corretos:', mpTokenData);
+
+      window.Mercadopago.createToken(mpTokenData, (status: number, response: any) => {
         console.log('MercadoPago token response:', { status, response });
         if (status === 200 || status === 201) {
           resolve(response.id);
