@@ -730,7 +730,18 @@ const Payment = () => {
       const paymentStatus = data.payment?.status;
       const paymentStatusDetail = data.payment?.status_detail;
 
-      console.log('Status do pagamento:', { paymentStatus, paymentStatusDetail, payment: data.payment });
+      console.log('Status do pagamento:', {
+        paymentStatus,
+        paymentStatusDetail,
+        paymentId: data.payment?.id,
+        fullPayment: data.payment
+      });
+
+      // Verificar se há erros imediatos no response
+      if (data.error || data.mpError) {
+        console.error('Erro imediato do MercadoPago:', data.error || data.mpError);
+        throw new Error(data.error || data.mpError?.message || 'Erro no processamento');
+      }
 
       if (paymentStatus === 'approved' || paymentStatus === 'authorized') {
         // ✅ APROVADO IMEDIATAMENTE
@@ -747,8 +758,10 @@ const Payment = () => {
         toast({ title: 'Sucesso!', description: 'Pagamento aprovado! Bem-vindo ao grupo!' });
         setTimeout(() => navigate(`/payment/success/card`), 1000);
 
-      } else if (paymentStatus === 'rejected') {
+      } else if (paymentStatus === 'rejected' || paymentStatus === 'cancelled') {
         // ❌ REJEITADO IMEDIATAMENTE
+        console.log('❌ Pagamento rejeitado imediatamente:', { paymentStatus, paymentStatusDetail });
+
         await supabase
           .from('orders')
           .update({
@@ -763,6 +776,24 @@ const Payment = () => {
 
       } else if (paymentStatus === 'pending' || paymentStatus === 'in_process') {
         // ⏳ EM ANÁLISE REAL
+        console.log('⏳ Pagamento em análise:', { paymentStatus, paymentStatusDetail });
+
+        // Verificar se é realmente análise ou erro de dados
+        if (paymentStatusDetail && paymentStatusDetail.includes('rejected')) {
+          console.log('❌ Detectado rejeição disfarçada de análise');
+
+          await supabase
+            .from('orders')
+            .update({
+              status: 'failed',
+              external_payment_data: data.payment
+            })
+            .eq('id', orderData.order_id);
+
+          const rejectionReason = getRejectReason(paymentStatusDetail);
+          throw new Error(rejectionReason);
+        }
+
         toast({
           title: 'Pagamento em Análise',
           description: 'Seu pagamento está sendo analisado. Acompanhe o status na seção Faturas.'

@@ -39,6 +39,7 @@ import AdicionarCreditos from "./pages/AdicionarCreditos";
 import SacarCreditos from "./pages/SacarCreditos";
 import DetalhesTransacao from "./pages/DetalhesTransacao";
 import Faturas from "./pages/Faturas";
+import DetalhesFatura from "./pages/DetalhesFatura";
 import MyGroups from "./pages/MyGroups";
 import Perfil from "./pages/Perfil";
 import Ajuda from "./pages/Ajuda";
@@ -212,6 +213,11 @@ const AppRouter = () => {
               <Route path="/faturas" element={
                 <RequireAuth>
                   <Faturas />
+                </RequireAuth>
+              } />
+              <Route path="/fatura/:id" element={
+                <RequireAuth>
+                  <DetalhesFatura />
                 </RequireAuth>
               } />
               

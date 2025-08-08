@@ -54,6 +54,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         external_reference: externalReference,
       };
 
+      // Adicionar prazo de vencimento para PIX (24 horas)
+      if (type === 'pix') {
+        const expirationDate = new Date();
+        expirationDate.setHours(expirationDate.getHours() + 24);
+        basePayment.date_of_expiration = expirationDate.toISOString();
+      }
+
       let paymentPayload: any = basePayment;
 
       if (type === 'card') {

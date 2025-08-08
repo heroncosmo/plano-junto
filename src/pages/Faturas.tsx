@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { formatPrice } from '@/hooks/useGroups';
 import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 interface Order {
   id: string;
@@ -41,7 +43,7 @@ interface Order {
   external_payment_data: any;
   group: {
     name: string;
-    monthly_fee_cents: number;
+    price_per_slot_cents: number;
   };
 }
 
@@ -64,7 +66,7 @@ export default function Faturas() {
         .from('orders')
         .select(`
           *,
-          group:groups(name, monthly_fee_cents)
+          group:groups(name, price_per_slot_cents)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -193,8 +195,10 @@ export default function Faturas() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-4 space-y-6">
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 bg-gray-50">
+        <div className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -392,7 +396,9 @@ export default function Faturas() {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }
