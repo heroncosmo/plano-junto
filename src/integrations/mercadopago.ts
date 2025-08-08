@@ -47,3 +47,4 @@ export async function getPayment(id: string) {
   const res = await fetch(`${API_BASE}?id=${encodeURIComponent(id)}`);
   return res.json();
 }
+

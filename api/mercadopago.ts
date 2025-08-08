@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mercadopago from 'mercadopago';
 
-// Configure Mercado Pago SDK
+// Configure Mercado Pago SDK via env var
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN;
 if (!ACCESS_TOKEN) {
   console.warn('MP_ACCESS_TOKEN not set. Set env var MP_ACCESS_TOKEN with your Mercado Pago Access Token.');
@@ -94,3 +94,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ success: false, error: message });
   }
 }
+

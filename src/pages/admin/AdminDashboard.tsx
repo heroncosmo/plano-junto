@@ -4,6 +4,10 @@ import { Users, Crown, FileText, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getSystemStats } from '@/integrations/supabase/functions';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SystemStats {
   totalClients: number;
@@ -16,6 +20,10 @@ const AdminDashboard = () => {
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Payment credentials form state
+  const [mpToken, setMpToken] = useState('');
+  const [savingToken, setSavingToken] = useState(false);
 
   useEffect(() => {
     loadSystemStats();
@@ -43,6 +51,30 @@ const AdminDashboard = () => {
       style: 'currency',
       currency: 'BRL'
     }).format(cents / 100);
+  };
+
+  const handleSaveMpToken = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mpToken || mpToken.length < 16) {
+      toast({ title: 'Token inválido', description: 'Informe um Access Token válido do Mercado Pago.', variant: 'destructive' });
+      return;
+    }
+    try {
+      setSavingToken(true);
+      const { data, error } = await supabase.functions.invoke('admin-save-credential', {
+        body: { provider: 'mercadopago', token: mpToken }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Credencial salva', description: 'Access Token gravado com sucesso (write-only).' });
+      setMpToken('');
+    } catch (err: any) {
+      console.error('Erro ao salvar credencial:', err);
+      toast({ title: 'Erro ao salvar', description: err?.message || 'Falha ao salvar credencial.', variant: 'destructive' });
+    } finally {
+      setSavingToken(false);
+    }
   };
 
   if (loading) {
@@ -133,6 +165,46 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Configurações de Pagamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveMpToken} className="space-y-4">
+              <div>
+                <Label className="text-sm">Provedor</Label>
+                <Input value="Mercado Pago" disabled className="mt-1 bg-gray-50" />
+              </div>
+              <div>
+                <Label htmlFor="mpToken" className="text-sm">Access Token (produção)</Label>
+                <Input
+                  id="mpToken"
+                  type="password"
+                  placeholder="Cole aqui seu Access Token do Mercado Pago"
+                  value={mpToken}
+                  onChange={(e) => setMpToken(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Write-only. O token não será exibido novamente.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button type="submit" disabled={savingToken}>
+                  {savingToken ? 'Salvando...' : 'Salvar Credencial'}
+                </Button>
+              </div>
+
+              <div className="text-[11px] text-gray-500">
+                Segurança: armazenado criptografado no banco (RLS ativa), gravado via função segura e acessado apenas por funções server-side.
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Informações do Sistema</CardTitle>
