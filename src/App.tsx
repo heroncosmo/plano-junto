@@ -77,6 +77,9 @@ import LogoPrint from "./pages/LogoPrint";
 import OAuthSetup from "./pages/OAuthSetup";
 import AuthTest from "./pages/AuthTest";
 import SignupConfirmation from "./pages/SignupConfirmation";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicyComplete from "./pages/PrivacyPolicyComplete";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +122,7 @@ const AppRouter = () => {
               {/* Outras rotas */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/signup-confirmation" element={<SignupConfirmation />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/oauth-setup" element={<OAuthSetup />} />
               <Route path="/auth-test" element={<AuthTest />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -379,7 +383,9 @@ const AppRouter = () => {
               
               {/* Legal */}
               <Route path="/termos-de-uso" element={<TermosDeUso />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
+              <Route path="/politica-de-privacidade-completa" element={<PrivacyPolicyComplete />} />
               <Route path="/taxas" element={<Taxas />} />
               
               {/* Logo Print - Página para capturar a logo */}

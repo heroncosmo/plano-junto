@@ -57,8 +57,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/app`;
-    
+    // Use o domínio correto baseado no ambiente
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const redirectUrl = isLocalhost
+      ? `${window.location.origin}/app`
+      : 'https://juntaplay.lojapplace.com/app';
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -78,10 +82,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signInWithGoogle = async () => {
+    // Use o domínio correto baseado no ambiente
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const redirectUrl = isLocalhost
+      ? `${window.location.origin}/privacy-policy?fromSignup=true`
+      : 'https://juntaplay.lojapplace.com/privacy-policy?fromSignup=true';
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/app`
+        redirectTo: redirectUrl
       }
     });
     return { error };
@@ -90,11 +100,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
 
   const resendConfirmation = async (email: string) => {
+    // Use o domínio correto baseado no ambiente
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const redirectUrl = isLocalhost
+      ? `${window.location.origin}/app`
+      : 'https://juntaplay.lojapplace.com/app';
+
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: email,
       options: {
-        emailRedirectTo: `${window.location.origin}/app`
+        emailRedirectTo: redirectUrl
       }
     });
     return { error };

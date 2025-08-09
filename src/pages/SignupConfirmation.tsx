@@ -82,15 +82,23 @@ const SignupConfirmation: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="space-y-4">
-              <Button 
-                onClick={() => navigate('/auth')}
+              <Button
+                onClick={() => navigate('/privacy-policy', { state: { fromSignup: true, email } })}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
               >
-                Ir para Login
+                Configurar Preferências de Privacidade
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              
-              <Button 
+
+              <Button
+                onClick={() => navigate('/auth')}
+                variant="outline"
+                className="w-full"
+              >
+                Ir para Login
+              </Button>
+
+              <Button
                 onClick={() => navigate('/')}
                 variant="outline"
                 className="w-full"
