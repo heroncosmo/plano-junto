@@ -75,6 +75,7 @@ import CancelamentoSucesso from "./pages/CancelamentoSucesso";
 import LogoPrint from "./pages/LogoPrint";
 import OAuthSetup from "./pages/OAuthSetup";
 import AuthTest from "./pages/AuthTest";
+import SignupConfirmation from "./pages/SignupConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -110,6 +111,7 @@ const AppRouter = () => {
               
               {/* Outras rotas */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/signup-confirmation" element={<SignupConfirmation />} />
               <Route path="/oauth-setup" element={<OAuthSetup />} />
               <Route path="/auth-test" element={<AuthTest />} />
               <Route path="/dashboard" element={<Dashboard />} />

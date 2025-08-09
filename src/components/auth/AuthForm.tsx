@@ -22,7 +22,7 @@ const AuthForm = () => {
   const [error, setError] = useState('');
   const [registeredEmail, setRegisteredEmail] = useState('');
   
-  const { user, signIn, signUp, signInWithGoogle, signInWithFacebook, resendConfirmation } = useAuth();
+  const { user, signIn, signUp, signInWithGoogle, resendConfirmation } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -65,12 +65,13 @@ const AuthForm = () => {
         if (error) {
           setError(error.message);
         } else {
-          setRegisteredEmail(email);
-          setMode('confirm-email');
           toast({
             title: "Conta criada com sucesso!",
-            description: "Verifique seu email para confirmar sua conta",
+            description: "Redirecionando para confirmação...",
           });
+          setTimeout(() => {
+            navigate('/signup-confirmation', { state: { email } });
+          }, 1000);
         }
       }
     } catch (err: any) {
@@ -80,18 +81,16 @@ const AuthForm = () => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+  const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const { error } = provider === 'google'
-        ? await signInWithGoogle()
-        : await signInWithFacebook();
+      const { error } = await signInWithGoogle();
 
       if (error) {
         if (error.message.includes('OAuth')) {
-          setError(`${provider === 'google' ? 'Google' : 'Facebook'} OAuth não está configurado. Configure as credenciais no Supabase Dashboard.`);
+          setError('Google OAuth não está configurado. Configure as credenciais no Supabase Dashboard.');
         } else {
           setError(error.message);
         }
@@ -99,11 +98,11 @@ const AuthForm = () => {
         // OAuth redirect will happen automatically, no need to handle success here
         toast({
           title: "Redirecionando...",
-          description: `Conectando com ${provider === 'google' ? 'Google' : 'Facebook'}`,
+          description: "Conectando com Google",
         });
       }
     } catch (err: any) {
-      setError(`Erro ao conectar com ${provider === 'google' ? 'Google' : 'Facebook'}: ${err.message || 'Tente novamente'}`);
+      setError(`Erro ao conectar com Google: ${err.message || 'Tente novamente'}`);
     } finally {
       setLoading(false);
     }
@@ -203,24 +202,14 @@ const AuthForm = () => {
 
         {/* Social Login Buttons */}
         <div className="space-y-2">
-          <Button 
-            onClick={() => handleSocialLogin('google')}
+          <Button
+            onClick={handleGoogleLogin}
             disabled={loading}
             variant="outline"
             className="w-full"
           >
             <GoogleIcon className="mr-2 h-4 w-4" />
             {mode === 'login' ? 'Entrar' : 'Cadastrar'} com Google
-          </Button>
-          
-          <Button 
-            onClick={() => handleSocialLogin('facebook')}
-            disabled={loading}
-            variant="outline"
-            className="w-full"
-          >
-            <FacebookIcon className="mr-2 h-4 w-4" />
-            {mode === 'login' ? 'Entrar' : 'Cadastrar'} com Facebook
           </Button>
         </div>
 

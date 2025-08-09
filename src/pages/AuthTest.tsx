@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 const AuthTest = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>('');
-  const { signUp, signIn, signInWithGoogle, signInWithFacebook, resendConfirmation, user, signOut } = useAuth();
+  const { signUp, signIn, signInWithGoogle, resendConfirmation, user, signOut } = useAuth();
   const { toast } = useToast();
 
   const testEmailSignup = async () => {
@@ -70,22 +70,7 @@ const AuthTest = () => {
     }
   };
 
-  const testFacebookOAuth = async () => {
-    setLoading(true);
-    setResult('');
-    try {
-      const { error } = await signInWithFacebook();
-      if (error) {
-        setResult(`Erro no Facebook OAuth: ${error.message}`);
-      } else {
-        setResult('Redirecionando para Facebook...');
-      }
-    } catch (err: any) {
-      setResult(`Exceção Facebook: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const testResendConfirmation = async () => {
     setLoading(true);
@@ -179,14 +164,7 @@ const AuthTest = () => {
               >
                 Testar Google OAuth
               </Button>
-              <Button 
-                onClick={testFacebookOAuth} 
-                disabled={loading}
-                className="w-full"
-                variant="outline"
-              >
-                Testar Facebook OAuth
-              </Button>
+
             </div>
           </div>
 
