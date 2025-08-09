@@ -416,22 +416,38 @@ const GroupDetails = () => {
     setShowCancelConfirmDialog(true);
   };
 
-  const handleFinalCancel = async () => {
+  const handleFinalCancel = async (terminationType: 'immediate' | 'scheduled') => {
     setIsProcessingAction(true);
     try {
-      // Simular cancelamento do grupo
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Grupo encerrado",
-        description: "O grupo foi encerrado com sucesso.",
-      });
-      
-      navigate('/my-groups');
-    } catch (error) {
+      const { terminateGroup } = await import('../integrations/supabase/functions');
+
+      const result = await terminateGroup(
+        id!,
+        terminationType,
+        'Encerramento solicitado pelo administrador'
+      );
+
+      if (result.success) {
+        if (result.blocked) {
+          toast({
+            title: "Conta bloqueada",
+            description: result.error,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Grupo encerrado",
+            description: result.message,
+          });
+          navigate('/my-groups');
+        }
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error: any) {
       toast({
         title: "Erro ao encerrar grupo",
-        description: "Houve um problema ao encerrar o grupo. Tente novamente.",
+        description: error.message || "Houve um problema ao encerrar o grupo. Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -1231,37 +1247,81 @@ const GroupDetails = () => {
       <Dialog open={showCancelConfirmDialog} onOpenChange={setShowCancelConfirmDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Quando deseja cancelar do grupo?</DialogTitle>
+            <DialogTitle>Como deseja encerrar o grupo?</DialogTitle>
+            <DialogDescription>
+              Escolha entre encerramento imediato ou programado
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded-full bg-cyan-500"></div>
-                <div>
-                  <p className="text-sm font-medium">Imediatamente</p>
-                  <p className="text-xs text-gray-600">Cancelar grupo agora mesmo</p>
+            <div className="space-y-3">
+              <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+                <div className="flex items-start space-x-3">
+                  <div className="w-4 h-4 rounded-full bg-red-500 mt-0.5"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-900">Encerramento Imediato</p>
+                    <p className="text-xs text-red-700 mt-1">
+                      • Grupo será encerrado agora mesmo<br/>
+                      • Todos os membros perdem acesso imediatamente<br/>
+                      • Reembolso proporcional aos dias não utilizados
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <div className="flex items-start space-x-3">
+                  <div className="w-4 h-4 rounded-full bg-blue-500 mt-0.5"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900">Encerramento Programado</p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      • Grupo será encerrado 30 dias após o primeiro membro<br/>
+                      • Membros mantêm acesso até a data programada<br/>
+                      • Reembolso proporcional calculado automaticamente
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
+
             <div className="flex gap-2">
-              <Button 
-                className="flex-1 bg-red-600 hover:bg-red-700" 
-                onClick={handleFinalCancel}
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700"
+                onClick={() => handleFinalCancel('immediate')}
                 disabled={isProcessingAction}
               >
                 {isProcessingAction ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Encerrando...
+                    Processando...
                   </>
                 ) : (
-                  'Encerrar grupo'
+                  'Encerrar Agora'
                 )}
               </Button>
-              <Button variant="outline" onClick={() => setShowCancelConfirmDialog(false)}>
-                Voltar
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={() => handleFinalCancel('scheduled')}
+                disabled={isProcessingAction}
+              >
+                {isProcessingAction ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Processando...
+                  </>
+                ) : (
+                  'Programar'
+                )}
               </Button>
             </div>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowCancelConfirmDialog(false)}
+              disabled={isProcessingAction}
+            >
+              Cancelar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

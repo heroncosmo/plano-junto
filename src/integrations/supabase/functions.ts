@@ -589,6 +589,72 @@ export async function approveGroupByOwner(groupId: string) {
   }
 }
 
+// Função para encerrar grupo
+export async function terminateGroup(
+  groupId: string,
+  terminationType: 'immediate' | 'scheduled',
+  reason: string
+) {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('Usuário não autenticado');
+
+    const { data, error } = await supabase.rpc('terminate_group', {
+      group_uuid: groupId,
+      admin_user_id: user.user.id,
+      termination_type_param: terminationType,
+      reason_param: reason
+    });
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error('Erro ao encerrar grupo:', error);
+    throw error;
+  }
+}
+
+// Função para verificar se admin pode criar grupos (não está bloqueado)
+export async function checkAdminRestrictions() {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('Usuário não autenticado');
+
+    const { data, error } = await supabase.rpc('check_admin_frequent_cancellations', {
+      admin_user_id: user.user.id
+    });
+
+    if (error) throw error;
+
+    return { isBlocked: data };
+  } catch (error) {
+    console.error('Erro ao verificar restrições:', error);
+    throw error;
+  }
+}
+
+// Função para buscar histórico de cancelamentos do admin
+export async function getAdminCancellationHistory() {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('Usuário não autenticado');
+
+    const { data, error } = await supabase
+      .from('admin_cancellation_history')
+      .select('*')
+      .eq('admin_id', user.user.id)
+      .order('cancellation_date', { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar histórico de cancelamentos:', error);
+    throw error;
+  }
+}
+
 // FUNÇÕES ADMINISTRATIVAS
 // Função para buscar todos os clientes (apenas admin)
 export async function getAllClients() {

@@ -34,20 +34,59 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     console.log('🔍 DEBUG - AuthContext: Configurando listener de autenticação...');
-    
-    // Set up auth state listener FIRST
+
+    // Verificar se há sessão do Google OAuth no localStorage
+    const checkGoogleSession = () => {
+      const googleUser = localStorage.getItem('juntaplay_user');
+      if (googleUser) {
+        try {
+          const userData = JSON.parse(googleUser);
+          if (userData.provider === 'google') {
+            // Simular usuário do Supabase para compatibilidade
+            const mockUser = {
+              id: userData.id,
+              email: userData.email,
+              user_metadata: {
+                full_name: userData.name,
+                avatar_url: userData.avatar
+              }
+            } as any;
+
+            const mockSession = {
+              user: mockUser,
+              access_token: 'google-oauth-token'
+            } as any;
+
+            setUser(mockUser);
+            setSession(mockSession);
+            setLoading(false);
+            return true;
+          }
+        } catch (error) {
+          console.error('Erro ao verificar sessão do Google:', error);
+        }
+      }
+      return false;
+    };
+
+    // Verificar sessão do Google primeiro
+    if (checkGoogleSession()) {
+      return;
+    }
+
+    // Set up auth state listener para Supabase Auth (cadastro manual)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔍 DEBUG - AuthContext: Evento de autenticação:', event, { session: !!session, user: !!session?.user });
+        console.log('🔍 DEBUG - AuthContext: Evento de autenticação Supabase:', event, { session: !!session, user: !!session?.user });
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
+    // THEN check for existing Supabase session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔍 DEBUG - AuthContext: Sessão inicial:', { session: !!session, user: !!session?.user });
+      console.log('🔍 DEBUG - AuthContext: Sessão inicial Supabase:', { session: !!session, user: !!session?.user });
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -119,6 +158,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     console.log('🔍 DEBUG - Iniciando logout...');
     try {
+      // Limpar sessão do Google se existir
+      localStorage.removeItem('juntaplay_user');
+      localStorage.removeItem('sb-geojqrpzcyiyhjzobggy-auth-token');
+      console.log('🔍 DEBUG - Dados do Google removidos');
+
       // Primeiro, limpa o estado local
       setUser(null);
       setSession(null);

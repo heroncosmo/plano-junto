@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff, Mail, Lock, User, CheckCircle, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GoogleIcon, FacebookIcon } from './SocialIcons';
+import GoogleAuthDirect from './GoogleAuthDirect';
 
 type AuthMode = 'login' | 'register' | 'confirm-email';
 
@@ -202,15 +203,7 @@ const AuthForm = () => {
 
         {/* Social Login Buttons */}
         <div className="space-y-2">
-          <Button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            variant="outline"
-            className="w-full"
-          >
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            {mode === 'login' ? 'Entrar' : 'Cadastrar'} com Google
-          </Button>
+          <GoogleAuthDirect />
         </div>
 
         <div className="relative">
