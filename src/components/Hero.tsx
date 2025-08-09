@@ -57,8 +57,8 @@ const Hero = () => {
               <div className="grid grid-cols-3 gap-4 max-w-sm">
                 {/* Service icons placeholder */}
                 {[
-                  "YouTube", "Netflix", "Spotify", "Disney+", 
-                  "Amazon", "HBO", "Udemy", "ChatGPT", "Canva"
+                  "Vídeo", "Streaming", "Música", "Entretenimento",
+                  "E-commerce", "Séries", "Cursos", "IA", "Design"
                 ].map((service, index) => (
                   <div
                     key={service}

@@ -664,7 +664,7 @@ const Payment = () => {
       } else {
         toast({ title: 'Sucesso!', description: 'Pagamento processado com sucesso!' });
         setTimeout(() => {
-          navigate(`/payment/success/credits`);
+          navigate(`/payment/success/${orderData.order_id}`);
         }, 1000);
       }
     } catch (error) {
