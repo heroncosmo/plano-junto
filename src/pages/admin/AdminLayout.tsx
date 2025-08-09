@@ -26,7 +26,22 @@ const AdminLayout = () => {
   const adminStatus = isAdmin(user?.email);
 
   if (!adminStatus) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Negado</h1>
+          <p className="text-gray-600 mb-4">
+            Você não tem permissão para acessar esta área.
+          </p>
+          <p className="text-sm text-gray-500 mb-4">
+            Apenas administradores do sistema podem acessar esta página.
+          </p>
+          <Button onClick={() => navigate('/')} className="mt-4">
+            Voltar ao Início
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const menuItems = [

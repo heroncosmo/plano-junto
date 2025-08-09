@@ -9,27 +9,39 @@ import { ArrowLeft } from 'lucide-react';
 const CreateCustomGroupFidelity = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { formData } = location.state || {};
-  const [selectedFidelity, setSelectedFidelity] = useState('sem');
+  const { formData: initialFormData } = location.state || {};
+
+  const [formData, setFormData] = useState({
+    ...initialFormData,
+    fidelity: initialFormData?.fidelity || 'sem'
+  });
+
+  const [error, setError] = useState('');
 
   const fidelityOptions = [
     { id: 'sem', label: 'Sem', months: null },
+    { id: '1', label: '1', months: 1 },
+    { id: '3', label: '3', months: 3 },
     { id: '6', label: '6', months: 6 },
-    { id: '9', label: '9', months: 9 },
     { id: '12', label: '12', months: 12 }
   ];
 
   const handleBack = () => {
-    navigate('/create-group/custom/values');
+    navigate('/create-group/custom/questions', { state: { formData } });
+  };
+
+  const handleFidelitySelect = (value: string) => {
+    setFormData(prev => ({ ...prev, fidelity: value }));
   };
 
   const handleContinue = () => {
-    navigate('/create-group/custom/info', {
-      state: { 
-        formData,
-        fidelity: selectedFidelity
-      }
-    });
+    if (!formData.fidelity) {
+      setError('Por favor, selecione uma opção de fidelidade');
+      return;
+    }
+
+    setError('');
+    navigate('/create-group/custom/values', { state: { formData } });
   };
 
   return (
@@ -40,6 +52,7 @@ const CreateCustomGroupFidelity = () => {
         {/* Header */}
         <div className="flex items-center mb-6">
           <Button
+            type="button"
             variant="ghost"
             size="sm"
             onClick={handleBack}
@@ -84,9 +97,9 @@ const CreateCustomGroupFidelity = () => {
                 {fidelityOptions.map((option) => (
                   <button
                     key={option.id}
-                    onClick={() => setSelectedFidelity(option.id)}
+                    onClick={() => handleFidelitySelect(option.id)}
                     className={`w-12 h-12 rounded-full border text-sm font-medium transition-colors ${
-                      selectedFidelity === option.id
+                      formData.fidelity === option.id
                         ? 'bg-cyan-500 text-white border-cyan-500'
                         : 'bg-white text-gray-700 border-gray-300 hover:border-cyan-500'
                     }`}
@@ -112,9 +125,17 @@ const CreateCustomGroupFidelity = () => {
           </CardContent>
         </Card>
 
+        {/* Error Alert */}
+        {error && (
+          <div className="mt-6 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
         {/* Continue Button */}
         <div className="mt-8">
-          <Button 
+          <Button
+            type="button"
             onClick={handleContinue}
             className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
             size="lg"

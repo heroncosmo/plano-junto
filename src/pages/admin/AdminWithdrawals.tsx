@@ -12,10 +12,10 @@ interface WithdrawalData {
   user_id: string;
   amount_cents: number;
   pix_key: string;
-  pix_key_type: string;
   status: string;
   created_at: string;
   processed_at?: string;
+  two_fa_verified?: boolean;
   profiles?: {
     full_name: string;
     user_id: string;
@@ -296,12 +296,12 @@ const AdminWithdrawals = () => {
                   <h4 className="font-medium text-sm text-gray-600 mb-2">Informações do PIX</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-600">Tipo da Chave:</span>
-                      <span className="font-medium ml-2">{withdrawal.pix_key_type}</span>
-                    </div>
-                    <div>
                       <span className="text-gray-600">Chave PIX:</span>
                       <span className="font-medium ml-2">{withdrawal.pix_key}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">2FA Verificado:</span>
+                      <span className="font-medium ml-2">{withdrawal.two_fa_verified ? 'Sim' : 'Não'}</span>
                     </div>
                   </div>
                 </div>

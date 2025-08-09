@@ -12,10 +12,10 @@ const CreateCustomGroupQuestions = () => {
   const { formData: previousData, fidelity } = location.state || {};
   
   const [formData, setFormData] = useState({
-    category: 'video',
-    relationship: 'familia',
-    contactMethod: 'whatsapp',
-    accessMethod: 'automatico'
+    category: '',
+    relationship: '',
+    contactMethod: '',
+    accessMethod: ''
   });
 
   const categories = [
@@ -52,14 +52,34 @@ const CreateCustomGroupQuestions = () => {
   };
 
   const handleBack = () => {
-    navigate('/create-group/custom/pricing');
+    navigate('/create-group/custom/values');
   };
 
   const handleContinue = () => {
-    navigate('/create-group/custom/questions2', {
-      state: { 
-        formData: { ...previousData, ...formData },
-        fidelity
+    // Validações
+    if (!formData.category) {
+      alert('Por favor, selecione uma categoria');
+      return;
+    }
+
+    if (!formData.relationship) {
+      alert('Por favor, selecione o tipo de relacionamento');
+      return;
+    }
+
+    if (!formData.contactMethod) {
+      alert('Por favor, selecione um método de contato');
+      return;
+    }
+
+    if (!formData.accessMethod) {
+      alert('Por favor, selecione quando enviar o acesso');
+      return;
+    }
+
+    navigate('/create-group/custom/fidelity', {
+      state: {
+        formData: { ...previousData, ...formData }
       }
     });
   };
@@ -95,104 +115,96 @@ const CreateCustomGroupQuestions = () => {
 
         <div className="space-y-8">
           {/* Qual a categoria? */}
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-6">
-              <h3 className="font-medium text-gray-800 mb-4">Qual a categoria?</h3>
-              <div className="grid grid-cols-3 gap-3">
-                {categories.map((category) => {
-                  const IconComponent = category.icon;
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => handleSelection('category', category.id)}
-                      className={`p-4 rounded-lg border text-center transition-colors ${
-                        formData.category === category.id
-                          ? 'bg-cyan-500 text-white border-cyan-500'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-cyan-500'
-                      }`}
-                    >
-                      <IconComponent className="h-6 w-6 mx-auto mb-2" />
-                      <span className="text-xs">{category.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Qual o relacionamento entre os participantes? */}
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-6">
-              <h3 className="font-medium text-gray-800 mb-4">Qual o relacionamento entre os participantes?</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {relationships.map((relationship) => {
-                  const IconComponent = relationship.icon;
-                  return (
-                    <button
-                      key={relationship.id}
-                      onClick={() => handleSelection('relationship', relationship.id)}
-                      className={`p-4 rounded-lg border text-center transition-colors ${
-                        formData.relationship === relationship.id
-                          ? 'bg-cyan-500 text-white border-cyan-500'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-cyan-500'
-                      }`}
-                    >
-                      <IconComponent className="h-6 w-6 mx-auto mb-2" />
-                      <span className="text-xs">{relationship.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Como os participantes podem falar com você? */}
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-6">
-              <h3 className="font-medium text-gray-800 mb-4">Como os participantes podem falar com você?</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {contactMethods.map((method) => {
-                  const IconComponent = method.icon;
-                  return (
-                    <button
-                      key={method.id}
-                      onClick={() => handleSelection('contactMethod', method.id)}
-                      className={`p-4 rounded-lg border text-center transition-colors ${
-                        formData.contactMethod === method.id
-                          ? 'bg-cyan-500 text-white border-cyan-500'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-cyan-500'
-                      }`}
-                    >
-                      <IconComponent className="h-6 w-6 mx-auto mb-2" />
-                      <span className="text-xs">{method.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quando os participantes vão receber o acesso ao serviço? */}
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-6">
-              <h3 className="font-medium text-gray-800 mb-4">Quando os participantes vão receber o acesso ao serviço?</h3>
-              <div className="space-y-3">
-                {accessMethods.map((method) => (
+          <div className="space-y-4">
+            <h3 className="font-medium text-gray-800">Qual a categoria?</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {categories.map((category) => {
+                const IconComponent = category.icon;
+                return (
                   <button
-                    key={method.id}
-                    onClick={() => handleSelection('accessMethod', method.id)}
-                    className={`w-full p-4 rounded-lg border text-left transition-colors ${
-                      formData.accessMethod === method.id
+                    key={category.id}
+                    onClick={() => handleSelection('category', category.id)}
+                    className={`p-3 rounded-lg border text-center transition-all ${
+                      formData.category === category.id
                         ? 'bg-cyan-500 text-white border-cyan-500'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-cyan-500'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-cyan-300'
                     }`}
                   >
-                    <span className="text-sm">{method.label}</span>
+                    <IconComponent className="h-4 w-4 mx-auto mb-1" />
+                    <span className="text-xs">{category.label}</span>
                   </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Qual o relacionamento entre os participantes? */}
+          <div className="space-y-4">
+            <h3 className="font-medium text-gray-800">Qual o relacionamento entre os participantes?</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {relationships.map((relationship) => {
+                const IconComponent = relationship.icon;
+                return (
+                  <button
+                    key={relationship.id}
+                    onClick={() => handleSelection('relationship', relationship.id)}
+                    className={`p-3 rounded-lg border text-center transition-all ${
+                      formData.relationship === relationship.id
+                        ? 'bg-cyan-500 text-white border-cyan-500'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-cyan-300'
+                    }`}
+                  >
+                    <IconComponent className="h-4 w-4 mx-auto mb-1" />
+                    <span className="text-xs">{relationship.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Como os participantes podem falar com você? */}
+          <div className="space-y-4">
+            <h3 className="font-medium text-gray-800">Como os participantes podem falar com você?</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {contactMethods.map((method) => {
+                const IconComponent = method.icon;
+                return (
+                  <button
+                    key={method.id}
+                    onClick={() => handleSelection('contactMethod', method.id)}
+                    className={`p-3 rounded-lg border text-center transition-colors ${
+                      formData.contactMethod === method.id
+                        ? 'bg-cyan-500 text-white border-cyan-500'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-cyan-300'
+                    }`}
+                  >
+                    <IconComponent className="h-4 w-4 mx-auto mb-1" />
+                    <span className="text-xs">{method.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Quando os participantes vão receber o acesso ao serviço? */}
+          <div className="space-y-4">
+            <h3 className="font-medium text-gray-800">Quando os participantes vão receber o acesso ao serviço?</h3>
+            <div className="space-y-3">
+              {accessMethods.map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => handleSelection('accessMethod', method.id)}
+                  className={`w-full p-3 rounded-lg border text-left transition-colors ${
+                    formData.accessMethod === method.id
+                      ? 'bg-cyan-500 text-white border-cyan-500'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-cyan-300'
+                  }`}
+                >
+                  <span className="text-sm">{method.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Continue Button */}

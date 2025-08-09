@@ -17,7 +17,7 @@ interface GroupData {
   service_id: string;
   max_members: number;
   current_members: number;
-  price_cents: number;
+  price_per_slot_cents: number;
   admin_profile?: {
     full_name: string;
     user_id: string;
@@ -43,11 +43,16 @@ const AdminGroups = () => {
   const loadGroups = async () => {
     try {
       setLoading(true);
-      
-      // Buscar grupos básicos
+
+      // Debug: verificar usuário atual
+      const { data: userData } = await supabase.auth.getUser();
+      console.log('🔍 DEBUG - Usuário atual:', userData.user?.email);
+
+      // Buscar grupos básicos (apenas os que precisam de aprovação)
       const { data: groupsData, error } = await supabase
         .from('groups')
         .select('*')
+        .eq('admin_approved', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -104,24 +109,63 @@ const AdminGroups = () => {
 
   const handleApproveGroup = async (groupId: string) => {
     try {
+      console.log('🔍 DEBUG - Iniciando aprovação do grupo:', groupId);
       setApprovingGroup(groupId);
-      
+
+      // Buscar informações do grupo para verificar se é personalizado
+      const { data: groupData, error: fetchError } = await supabase
+        .from('groups')
+        .select(`
+          *,
+          services:service_id (
+            pre_approved
+          )
+        `)
+        .eq('id', groupId)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ Erro ao buscar dados do grupo:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('🔍 DEBUG - Dados do grupo:', groupData);
+
+      // Para grupos personalizados (serviços não pré-aprovados), liberar automaticamente
+      const isCustomGroup = !groupData.services?.pre_approved;
+      console.log('🔍 DEBUG - É grupo personalizado?', isCustomGroup);
+
+      const updateData = {
+        admin_approved: true,
+        owner_approved: isCustomGroup ? true : false, // Liberar automaticamente se for personalizado
+        status: isCustomGroup ? 'active_with_slots' : 'waiting_subscription'
+      };
+
+      console.log('🔍 DEBUG - Dados para atualização:', updateData);
+
       const { error } = await supabase
         .from('groups')
-        .update({ status: 'approved' })
+        .update(updateData)
         .eq('id', groupId);
-        
-      if (error) throw error;
-      
+
+      if (error) {
+        console.error('❌ Erro ao atualizar grupo:', error);
+        throw error;
+      }
+
+      console.log('✅ Grupo aprovado com sucesso!');
+
       toast({
         title: "Grupo Aprovado",
-        description: "Grupo foi aprovado com sucesso.",
+        description: isCustomGroup
+          ? "Grupo personalizado foi aprovado e está disponível para participação."
+          : "Grupo foi aprovado pelo administrador e agora aguarda liberação do dono.",
       });
-      
+
       await loadGroups();
-      
+
     } catch (error) {
-      console.error('Erro ao aprovar grupo:', error);
+      console.error('❌ Erro ao aprovar grupo:', error);
       toast({
         title: "Erro",
         description: "Erro ao aprovar grupo.",
@@ -135,21 +179,24 @@ const AdminGroups = () => {
   const handleRejectGroup = async (groupId: string) => {
     try {
       setApprovingGroup(groupId);
-      
+
       const { error } = await supabase
         .from('groups')
-        .update({ status: 'rejected' })
+        .update({
+          admin_approved: false,
+          status: 'rejected'
+        })
         .eq('id', groupId);
-        
+
       if (error) throw error;
-      
+
       toast({
         title: "Grupo Rejeitado",
-        description: "Grupo foi rejeitado.",
+        description: "Grupo foi rejeitado pelo administrador.",
       });
-      
+
       await loadGroups();
-      
+
     } catch (error) {
       console.error('Erro ao rejeitar grupo:', error);
       toast({
@@ -173,30 +220,30 @@ const AdminGroups = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const getStatusColor = (group: GroupData) => {
+    if (!group.admin_approved && group.status !== 'rejected') {
+      return 'bg-yellow-100 text-yellow-800';
     }
+    if (group.admin_approved) {
+      return 'bg-green-100 text-green-800';
+    }
+    if (group.status === 'rejected') {
+      return 'bg-red-100 text-red-800';
+    }
+    return 'bg-gray-100 text-gray-800';
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Aguardando Aprovação';
-      case 'approved':
-        return 'Aprovado';
-      case 'rejected':
-        return 'Rejeitado';
-      default:
-        return status;
+  const getStatusLabel = (group: GroupData) => {
+    if (!group.admin_approved && group.status !== 'rejected') {
+      return 'Aguardando Aprovação';
     }
+    if (group.admin_approved) {
+      return 'Aprovado pelo Admin';
+    }
+    if (group.status === 'rejected') {
+      return 'Rejeitado';
+    }
+    return group.status;
   };
 
   if (loading) {
@@ -253,8 +300,8 @@ const AdminGroups = () => {
                       <p className="text-sm text-gray-600">{group.services?.name}</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className={getStatusColor(group.status)}>
-                    {getStatusLabel(group.status)}
+                  <Badge variant="outline" className={getStatusColor(group)}>
+                    {getStatusLabel(group)}
                   </Badge>
                 </div>
               </CardHeader>
@@ -270,7 +317,7 @@ const AdminGroups = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-gray-600">Preço:</span>
-                          <span className="font-medium">{formatCurrency(group.price_cents)}</span>
+                          <span className="font-medium">{formatCurrency(group.price_per_slot_cents)}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-gray-600">Membros:</span>
@@ -301,7 +348,7 @@ const AdminGroups = () => {
                       Ver Grupo
                     </Button>
                     
-                    {group.status === 'pending' && (
+                    {!group.admin_approved && group.status !== 'rejected' && (
                       <>
                         <Button
                           onClick={() => handleApproveGroup(group.id)}

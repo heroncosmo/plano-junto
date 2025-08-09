@@ -76,7 +76,8 @@ const CreateGroupConfirmation = () => {
           price_per_slot_cents: groupInfo.pricePerSlot,
           status: 'waiting_subscription',
           instant_access: false,
-          admin_approved: false,
+          admin_approved: true,
+          owner_approved: false,
           fidelity_months: fidelity?.months || null,
           situation: 'O grupo será analisado pela equipe do JuntaPlay',
           other_info: `Site: ${groupInfo.site}`
@@ -86,11 +87,23 @@ const CreateGroupConfirmation = () => {
 
       if (error) throw error;
 
+      // Para grupos baseados em serviços pré-aprovados, liberar automaticamente
+      if (service.pre_approved) {
+        const { error: releaseError } = await supabase
+          .from('groups')
+          .update({ owner_approved: true, status: 'active_with_slots' })
+          .eq('id', data.id);
+
+        if (releaseError) {
+          console.error('Erro ao liberar grupo automaticamente:', releaseError);
+        }
+      }
+
       setIsSuccess(true);
-      
+
       toast({
         title: "Grupo criado com sucesso!",
-        description: "Seu grupo será analisado pela nossa equipe"
+        description: service.pre_approved ? "Seu grupo está ativo e disponível!" : "Seu grupo será analisado pela nossa equipe"
       });
 
     } catch (error) {

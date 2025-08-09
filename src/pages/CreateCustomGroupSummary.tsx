@@ -5,32 +5,110 @@ import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, ChevronDown } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CreateCustomGroupSummary = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { formData, fidelity } = location.state || {};
-  
+  const { formData } = location.state || {};
+  const { user } = useAuth();
+
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleBack = () => {
-    navigate('/create-group/custom/questions2');
+    navigate('/create-group/custom/values', { state: { formData } });
   };
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     if (!agreedToTerms) {
       alert('Você precisa concordar com os termos para continuar');
       return;
     }
-    
-    // Simular criação do grupo
-    setShowSuccessModal(true);
+
+    if (!user) {
+      alert('Você precisa estar logado para criar um grupo');
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      // 1. Primeiro, criar um serviço personalizado
+      const totalSlots = formData.customSlots ?
+        parseInt(formData.customSlotsValue) :
+        parseInt(formData.totalSlots);
+
+      const { data: serviceData, error: serviceError } = await supabase
+        .from('services')
+        .insert({
+          name: formData.serviceName || 'Serviço Personalizado',
+          category: formData.category || 'other',
+          max_users: totalSlots || 6,
+          pre_approved: false,
+          website: formData.website || null
+        })
+        .select()
+        .single();
+
+      if (serviceError) {
+        console.error('Erro ao criar serviço:', serviceError);
+        throw serviceError;
+      }
+
+      // 2. Criar o grupo
+      const reservedSlots = formData.customReserved ?
+        parseInt(formData.customReservedValue) :
+        parseInt(formData.reservedSlots);
+
+      const { data: groupData, error: groupError } = await supabase
+        .from('groups')
+        .insert({
+          admin_id: user.id,
+          service_id: serviceData.id,
+          name: formData.groupName || formData.serviceName || 'Grupo Personalizado',
+          description: formData.description || '',
+          rules: formData.rules || 'Não compartilhe a senha com ninguém fora deste grupo de assinatura\nNão utilize esta conta compartilhada para postar em meu nome do administrador\nNão altere a senha do grupo',
+          relationship_type: formData.relationship || 'amigos',
+          max_members: totalSlots || 6,
+          price_per_slot_cents: Math.round((parseFloat(formData.serviceCost) || 0) * 100),
+          status: 'pending_admin_approval',
+          instant_access: formData.accessMethod === 'imediatamente',
+          admin_approved: false,
+          owner_approved: false,
+          fidelity_months: formData.fidelity === 'sem' ? 0 : parseInt(formData.fidelity) || 0,
+          other_info: formData.website || '',
+          contact_method: formData.contactMethod || 'email',
+          reserved_slots: reservedSlots || 1
+        })
+        .select()
+        .single();
+
+      if (groupError) {
+        console.error('Erro ao criar grupo:', groupError);
+        throw groupError;
+      }
+
+      // 3. Criar membership para o admin (para que apareça na aba "Administrando" e não "Participando")
+      // Não criamos membership para o admin, pois ele deve aparecer apenas na aba "Administrando"
+      // O admin é identificado pelo campo admin_id na tabela groups
+
+      // Sucesso - mostrar modal
+      setShowSuccessModal(true);
+
+    } catch (error) {
+      console.error('Erro ao criar grupo:', error);
+      alert('Erro ao criar grupo. Tente novamente.');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleModalClose = () => {
     setShowSuccessModal(false);
-    navigate('/create-group');
+    navigate('/my-groups');
   };
 
   return (
@@ -51,141 +129,164 @@ const CreateCustomGroupSummary = () => {
           <div className="flex-1">
             <h1 className="text-lg font-medium text-gray-800">Veja o resumo do seu grupo</h1>
           </div>
+          <button
+            onClick={() => navigate('/create-group/custom/values')}
+            className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors"
+          >
+            <Edit className="h-4 w-4 text-white" />
+          </button>
         </div>
 
-        <div className="space-y-4">
-          {/* Serviço */}
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-4">
+        {/* Primeira seção - Informações básicas */}
+        <Card className="bg-white border-gray-200">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Serviço: {formData?.serviceName || 's'}</span>
+              <button
+                onClick={() => navigate('/create-group/custom/values')}
+                className="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors"
+              >
+                <Edit className="h-3 w-3 text-white" />
+              </button>
+            </div>
+
+            <div>
+              <span className="text-sm text-gray-700">Nome do grupo: {formData?.groupName || 's'}</span>
+            </div>
+
+            <div>
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-800">Serviço: E-g</h3>
-                  <p className="text-sm text-gray-600">Nome do grupo: E-g</p>
-                  <div className="flex items-center mt-2">
-                    <span className="text-sm text-gray-600">Regras: Não compartilhe a senha c...</span>
-                    <ChevronDown className="h-4 w-4 text-gray-400 ml-1" />
-                  </div>
-                  <div className="flex items-center mt-1">
-                    <span className="text-sm text-gray-600">Descrição: E-g...</span>
-                    <ChevronDown className="h-4 w-4 text-gray-400 ml-1" />
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">Site: E-g</p>
-                </div>
-                <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">?</span>
+                <div className="flex items-center">
+                  <span className="text-sm text-gray-700">Regras:</span>
+                  <ChevronDown className="h-4 w-4 text-gray-400 ml-1" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="text-xs text-gray-600 mt-1">
+                <div>Não compartilhe a senha com ninguém fora deste grupo de assinatura</div>
+                <div>Não utilize esta conta compartilhada para postar em meu nome do administrador</div>
+                <div>Não altere a senha do grupo</div>
+              </div>
+            </div>
 
-          {/* Fidelidade */}
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-4">
+            <div>
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-800">Fidelidade: Sem fidelidade</h3>
-                </div>
-                <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">?</span>
+                <div className="flex items-center">
+                  <span className="text-sm text-gray-700">Descrição: {formData?.description || 's'}...</span>
+                  <ChevronDown className="h-4 w-4 text-gray-400 ml-1" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Valor do serviço */}
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-4">
+            <div>
+              <span className="text-sm text-gray-700">Site: {formData?.website || 's'}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Segunda seção - Fidelidade */}
+        <Card className="bg-white border-gray-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">
+                Fidelidade: {formData?.fidelity === 'sem' || !formData?.fidelity ? 'Sem fidelidade' : `${formData.fidelity} ${formData.fidelity === '1' ? 'mês' : 'meses'}`}
+              </span>
+              <button
+                onClick={() => navigate('/create-group/custom/fidelity', { state: { formData } })}
+                className="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors"
+              >
+                <Edit className="h-3 w-3 text-white" />
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Terceira seção - Valores */}
+        <Card className="bg-white border-gray-200">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Valor do serviço: R$ {formData?.serviceCost || '10,00'}</span>
+              <button
+                onClick={() => navigate('/create-group/custom/values')}
+                className="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors"
+              >
+                <Edit className="h-3 w-3 text-white" />
+              </button>
+            </div>
+
+            <div>
+              <span className="text-sm text-gray-700">Valor promocional: Não</span>
+            </div>
+
+            <div>
+              <span className="text-sm text-gray-700">Vagas Totais: {formData?.totalSlots || '3'}</span>
+            </div>
+
+            <div>
+              <span className="text-sm text-gray-700">Reservadas para você: {formData?.reservedSlots || '2'}</span>
+            </div>
+
+            {/* Destaque para o valor que os membros pagam */}
+            <div className="bg-cyan-50 border-l-4 border-cyan-500 p-3 mt-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-800">Valor do serviço: R$ 10,00</h3>
-                </div>
-                <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">?</span>
-                </div>
+                <span className="text-sm font-medium text-cyan-800">Os membros irão pagar: R$ 6,83</span>
+                <span className="text-xs text-cyan-600 cursor-pointer hover:underline">Reduzir valor</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Valor do serviço (duplicado) */}
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-800">Valor do serviço: R$ 10,00</h3>
-                </div>
-                <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">?</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Quarta seção - Suporte e configurações */}
+        <Card className="bg-white border-gray-200">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Suporte aos membros: E-mail e WhatsApp</span>
+              <button
+                onClick={() => navigate('/create-group/custom/questions')}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+            </div>
 
-          {/* Valor promocional */}
-          <div className="text-sm text-gray-600">
-            Valor promocional: Não
-          </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">Envio de acesso: Após o grupo completar</span>
+              <button
+                onClick={() => navigate('/create-group/custom/questions')}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+            </div>
 
-          {/* Vagas Totais */}
-          <div className="text-sm text-gray-600">
-            Vagas Totais: -
-          </div>
 
-          {/* Reservadas para você */}
-          <div className="text-sm text-gray-600">
-            Reservadas para você: 1
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Os membros têm que pagar */}
-          <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
-            <p className="text-sm text-cyan-800">
-              Os membros têm que pagar: <span className="font-medium">R$ 6,00</span>
-              <button className="ml-2 text-cyan-600 underline text-xs">Reduzir valor</button>
-            </p>
-          </div>
-
-          {/* Suporte aos membros */}
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-600">Suporte aos membros: E-mail e WhatsApp</span>
-            <Edit className="h-4 w-4 text-gray-400" />
-          </div>
-
-          {/* Envio de acesso */}
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-600">Envio de acesso: Após o grupo completar</span>
-            <Edit className="h-4 w-4 text-gray-400" />
-          </div>
-
-          {/* Forma de acesso */}
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-600">Forma de acesso: Login e Senha</span>
-          </div>
-
-          {/* Terms checkbox */}
-          <div className="flex items-start space-x-2 py-4">
-            <input 
-              type="checkbox" 
-              id="terms"
+        {/* Termos */}
+        <div className="mt-6">
+          <label className="flex items-start space-x-3">
+            <input
+              type="checkbox"
               checked={agreedToTerms}
               onChange={(e) => setAgreedToTerms(e.target.checked)}
-              className="mt-0.5" 
+              className="mt-1"
             />
-            <label htmlFor="terms" className="text-sm text-gray-600">
-              Confirmo estar ciente de que a plataforma <span className="font-medium">Kotas</span> não está associada ou afiliada ao 
-              serviço que Concordo em cumprir integralmente os termos de serviço e as 
-              plataforma <span className="font-medium">Kotas</span>.
-            </label>
-          </div>
+            <span className="text-xs text-gray-600">
+              Confirmo estar ciente de que a plataforma <span className="font-medium">Kotas</span> não está associada ou afiliada ao
+              serviço & Concordo em cumprir integralmente os termos do serviço e da plataforma <span className="font-medium">Kotas</span>
+            </span>
+          </label>
         </div>
 
         {/* Create Group Button */}
         <div className="mt-8">
-          <Button 
+          <Button
             onClick={handleCreateGroup}
             className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
             size="lg"
-            disabled={!agreedToTerms}
+            disabled={!agreedToTerms || isCreating}
           >
-            Criar Grupo
+            {isCreating ? 'Criando Grupo...' : 'Criar Grupo'}
           </Button>
         </div>
 
@@ -204,21 +305,21 @@ const CreateCustomGroupSummary = () => {
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-sm mx-4 text-center">
-            <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl text-cyan-500">😊</span>
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl text-green-500">✅</span>
             </div>
-            <h3 className="text-lg font-medium text-gray-800 mb-2">Ops! :)</h3>
+            <h3 className="text-lg font-medium text-gray-800 mb-2">Grupo Criado!</h3>
             <p className="text-sm text-gray-600 mb-6">
-              Precisamos de mais informações sobre sua conta antes de 
-              efetuar essa ação. Entre em contato com o suporte.
+              Seu grupo personalizado foi criado com sucesso e está aguardando aprovação do administrador.
               <br />
-              <a href="#" className="text-cyan-500 underline">Clique aqui</a> para ter assistência.
+              <br />
+              Você será notificado quando o grupo for aprovado e estiver disponível para membros.
             </p>
-            <Button 
+            <Button
               onClick={handleModalClose}
               className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
             >
-              Ok
+              Entendi
             </Button>
           </div>
         </div>

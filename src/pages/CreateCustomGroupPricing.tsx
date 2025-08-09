@@ -14,9 +14,12 @@ const CreateCustomGroupPricing = () => {
   
   const [formData, setFormData] = useState({
     totalPrice: '',
-    isPromotional: false,
     totalSlots: '',
-    reservedSlots: '1'
+    reservedSlots: '',
+    customTotalSlots: '',
+    customReservedSlots: '',
+    showCustomTotal: false,
+    showCustomReserved: false
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -26,20 +29,43 @@ const CreateCustomGroupPricing = () => {
     }));
   };
 
+  const handleCustomTotal = () => {
+    setFormData(prev => ({
+      ...prev,
+      showCustomTotal: true,
+      totalSlots: ''
+    }));
+  };
+
+  const handleCustomReserved = () => {
+    setFormData(prev => ({
+      ...prev,
+      showCustomReserved: true,
+      reservedSlots: ''
+    }));
+  };
+
+  const calculateMemberPrice = () => {
+    const total = parseFloat(formData.totalPrice) || 0;
+    const slots = parseInt(formData.totalSlots || formData.customTotalSlots) || 1;
+    const reserved = parseInt(formData.reservedSlots || formData.customReservedSlots) || 0;
+    const availableSlots = slots - reserved;
+
+    if (availableSlots <= 0) return 0;
+    return (total / availableSlots).toFixed(2);
+  };
+
   const handleBack = () => {
-    navigate('/create-group/custom/info');
+    navigate('/create-group/custom/questions');
   };
 
   const handleContinue = () => {
-    navigate('/create-group/custom/questions', {
-      state: { 
-        formData: { ...previousData, ...formData },
-        fidelity
+    navigate('/create-group/custom/summary', {
+      state: {
+        formData: { ...previousData, ...formData }
       }
     });
   };
-
-  const isNextDisabled = !formData.totalPrice || !formData.totalSlots;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -90,14 +116,7 @@ const CreateCustomGroupPricing = () => {
               </div>
             </div>
 
-            {/* Valor do serviço é promocional? */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                Valor do serviço é promocional?
-                <Info className="h-4 w-4 text-gray-400" />
-              </label>
-              {/* Mantemos minimalista: sem toggle funcional por enquanto */}
-            </div>
+
 
             {/* Vagas totais */}
             <div>
@@ -105,7 +124,7 @@ const CreateCustomGroupPricing = () => {
                 Vagas totais
               </label>
               <div className="flex flex-wrap gap-2">
-                {[2,3,4,5,6,7,8,9,10].map((num) => (
+                {[3,4,5,6,7,8,9,10].map((num) => (
                   <button
                     key={num}
                     onClick={() => handleInputChange('totalSlots', num.toString())}
@@ -146,9 +165,9 @@ const CreateCustomGroupPricing = () => {
             {/* Os membros têm que pagar */}
             <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
               <p className="text-sm text-cyan-800">
-                Os membros irão pagar
+                Os membros têm que pagar:
                 <br />
-                <span className="font-medium">R$ -</span>
+                <span className="font-medium">R$ 6,00</span>
               </p>
             </div>
           </CardContent>
@@ -156,11 +175,10 @@ const CreateCustomGroupPricing = () => {
 
         {/* Continue Button */}
         <div className="mt-8">
-          <Button 
+          <Button
             onClick={handleContinue}
             className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
             size="lg"
-            disabled={isNextDisabled}
           >
             Próximo
           </Button>

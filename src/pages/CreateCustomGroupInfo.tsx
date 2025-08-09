@@ -22,6 +22,12 @@ const CreateCustomGroupInfo = () => {
     website: ''
   });
 
+  const [errors, setErrors] = useState({
+    shareWhat: '',
+    serviceName: '',
+    groupName: ''
+  });
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -30,12 +36,39 @@ const CreateCustomGroupInfo = () => {
   };
 
   const handleBack = () => {
-    navigate('/create-group/custom/fidelity');
+    navigate('/create-group');
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      shareWhat: '',
+      serviceName: '',
+      groupName: ''
+    };
+
+    if (!formData.shareWhat.trim()) {
+      newErrors.shareWhat = 'Por favor, informe o que deseja compartilhar';
+    }
+
+    if (!formData.serviceName.trim()) {
+      newErrors.serviceName = 'Por favor, informe o nome do serviço';
+    }
+
+    if (!formData.groupName.trim()) {
+      newErrors.groupName = 'Por favor, informe o nome do grupo';
+    }
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error !== '');
   };
 
   const handleContinue = () => {
+    if (!validateForm()) {
+      return;
+    }
+
     navigate('/create-group/custom/fidelity', {
-      state: { 
+      state: {
         formData: { ...previousData, ...formData },
         fidelity
       }
@@ -82,7 +115,11 @@ const CreateCustomGroupInfo = () => {
                 placeholder="Ex: Netflix, Spotify, Adobe..."
                 value={formData.shareWhat}
                 onChange={(e) => handleInputChange('shareWhat', e.target.value)}
+                className={errors.shareWhat ? 'border-red-500 focus:border-red-500' : ''}
               />
+              {errors.shareWhat && (
+                <p className="text-red-500 text-xs mt-1">{errors.shareWhat}</p>
+              )}
             </div>
 
             {/* Como o serviço se chama? */}
@@ -94,7 +131,11 @@ const CreateCustomGroupInfo = () => {
                 placeholder="Nome do serviço"
                 value={formData.serviceName}
                 onChange={(e) => handleInputChange('serviceName', e.target.value)}
+                className={errors.serviceName ? 'border-red-500 focus:border-red-500' : ''}
               />
+              {errors.serviceName && (
+                <p className="text-red-500 text-xs mt-1">{errors.serviceName}</p>
+              )}
             </div>
 
             {/* Como o grupo se chama? */}
@@ -106,7 +147,11 @@ const CreateCustomGroupInfo = () => {
                 placeholder="Nome do grupo"
                 value={formData.groupName}
                 onChange={(e) => handleInputChange('groupName', e.target.value)}
+                className={errors.groupName ? 'border-red-500 focus:border-red-500' : ''}
               />
+              {errors.groupName && (
+                <p className="text-red-500 text-xs mt-1">{errors.groupName}</p>
+              )}
             </div>
 
             {/* Quais são as regras? */}

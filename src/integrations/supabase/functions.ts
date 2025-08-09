@@ -325,8 +325,7 @@ export async function getUserGroups() {
         *,
         services:service_id (*)
       `)
-      .eq('admin_id', user.user.id)
-      .eq('status', 'active_with_slots');
+      .eq('admin_id', user.user.id);
 
     if (adminError) throw adminError;
 

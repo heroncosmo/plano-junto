@@ -103,16 +103,46 @@ const AdminComplaints = () => {
       console.log('📊 Reclamações encontradas:', complaintsData?.length || 0);
       console.log('📋 Dados das reclamações:', complaintsData);
 
-      // TESTE: Vamos primeiro mostrar as reclamações sem enriquecer
       if (complaintsData && complaintsData.length > 0) {
-        console.log('🎯 Mostrando reclamações sem enriquecimento primeiro...');
-        setComplaints(complaintsData.map(complaint => ({
-          ...complaint,
-          profiles: null,
-          groups: null,
-          admin_profile: null
-        })));
-        return; // Parar aqui para testar
+        console.log('🎯 Enriquecendo dados das reclamações...');
+
+        // Enriquecer dados das reclamações
+        const enrichedComplaints = await Promise.all(
+          complaintsData.map(async (complaint) => {
+            // Buscar dados do usuário
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('full_name, user_id')
+              .eq('user_id', complaint.user_id)
+              .single();
+
+            // Buscar dados do grupo
+            const { data: groupData } = await supabase
+              .from('groups')
+              .select(`
+                name,
+                services:service_id (name, icon_url)
+              `)
+              .eq('id', complaint.group_id)
+              .single();
+
+            // Buscar dados do admin
+            const { data: adminData } = await supabase
+              .from('profiles')
+              .select('full_name, user_id')
+              .eq('user_id', complaint.admin_id)
+              .single();
+
+            return {
+              ...complaint,
+              profiles: userData,
+              groups: groupData,
+              admin_profile: adminData
+            };
+          })
+        );
+
+        setComplaints(enrichedComplaints);
       } else {
         console.log('📭 Nenhuma reclamação ativa encontrada');
         setComplaints([]);
